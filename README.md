@@ -134,4 +134,4 @@ PC → Switch → FreeRADIUS → OpenLDAP → Attribution VLAN
 **Nedjmeddine Belloum** — BTS SIO option SISR — Chef de projet  
 Centre de formation : Mediaschool Nice — IRIS  
 Période : 23/02/2026 au 13/03/2026  
-Portfolio : [https://delcoco95.github.io/mon-portfolio/](https://delcoco95.github.io/mon-portfolio/)
+Portfolio : https://delcoco95.github.io/portfolio-nedj/
