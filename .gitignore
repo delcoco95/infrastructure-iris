@@ -1,0 +1,10 @@
+# Vagrant machine state (local only)
+.vagrant/
+
+# Environment variables (secrets)
+.env
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

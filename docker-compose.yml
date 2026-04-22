@@ -1,0 +1,227 @@
+# ============================================================
+# docker-compose.yml — Services applicatifs SRV-LINUX-IRIS
+# Projet : IRIS-NICE-2024-RP01
+# Auteur  : Nedjmeddine Belloum
+# VM      : SRV-LINUX-IRIS — 192.168.50.20
+#
+# Services : GLPI, Nextcloud, WireGuard, Prometheus, Grafana,
+#            Node Exporter, CAdvisor, ClamAV
+#
+# Note : OpenLDAP et FreeRADIUS supprimés — remplacés par
+#        AD DS + NPS sur DC-IRIS-01 (192.168.50.10)
+# ============================================================
+
+services:
+
+  # ── Base de données GLPI ──────────────────────────────────
+  glpi-db:
+    image: mariadb:10.6
+    container_name: glpi-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${GLPI_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${GLPI_DB_NAME}
+      MYSQL_USER:          ${GLPI_DB_USER}
+      MYSQL_PASSWORD:      ${GLPI_DB_PASSWORD}
+    volumes:
+      - /opt/iris/glpi-db:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── GLPI (gestion de parc) ────────────────────────────────
+  glpi:
+    image: diouxx/glpi:latest
+    container_name: glpi
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      MARIADB_HOST:     glpi-db
+      MARIADB_PORT:     "3306"
+      MARIADB_DATABASE: ${GLPI_DB_NAME}
+      MARIADB_USER:     ${GLPI_DB_USER}
+      MARIADB_PASSWORD: ${GLPI_DB_PASSWORD}
+      VERSION:          "10.0.10"
+      GLPI_LANG:        "fr_FR"
+    volumes:
+      - /opt/iris/glpi-data:/var/www/html/glpi
+    depends_on:
+      glpi-db:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+
+  # ── Base de données Nextcloud ─────────────────────────────
+  nextcloud-db:
+    image: mariadb:10.6
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NC_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${NC_DB_NAME}
+      MYSQL_USER:          ${NC_DB_USER}
+      MYSQL_PASSWORD:      ${NC_DB_PASSWORD}
+    volumes:
+      - /opt/iris/nextcloud-db:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Nextcloud (stockage partagé) ──────────────────────────
+  nextcloud:
+    image: nextcloud:28-apache
+    container_name: nextcloud
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      MYSQL_HOST:     nextcloud-db
+      MYSQL_DATABASE: ${NC_DB_NAME}
+      MYSQL_USER:     ${NC_DB_USER}
+      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
+      NEXTCLOUD_ADMIN_USER:     admin
+      NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: "192.168.50.20"
+    volumes:
+      - /opt/iris/nextcloud-data:/var/www/html
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+
+  # ── WireGuard VPN ─────────────────────────────────────────
+  wireguard:
+    image: weejewel/wg-easy:latest
+    container_name: wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+    ports:
+      - "51820:51820/udp"
+      - "51821:51821/tcp"
+    environment:
+      WG_HOST:          ${WG_HOST_IP}
+      PASSWORD:         ${WG_PASSWORD}
+      WG_PORT:          51820
+      WG_DEFAULT_DNS:   192.168.50.10
+      WG_ALLOWED_IPS:   "0.0.0.0/0"
+    volumes:
+      - /opt/iris/wireguard-data:/etc/wireguard
+    networks:
+      - frontend
+
+  # ── Prometheus (collecte métriques) ───────────────────────
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/iris/prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  # ── Grafana (dashboards) ──────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER:     admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP:     "false"
+      GF_SERVER_ROOT_URL:         "http://192.168.50.20:3000"
+      GF_INSTALL_PLUGINS:         "grafana-clock-panel,grafana-piechart-panel"
+    volumes:
+      - /opt/iris/grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+      - frontend
+
+  # ── Node Exporter (métriques OS) ─────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+
+  # ── CAdvisor (métriques conteneurs) ──────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8083:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - monitoring
+
+  # ── ClamAV (antivirus) ────────────────────────────────────
+  clamav:
+    image: clamav/clamav:stable
+    container_name: clamav
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    volumes:
+      - /opt/iris/clamav-db:/var/lib/clamav
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "false"
+      CLAMAV_NO_CLAMD:      "false"
+    networks:
+      - backend
+
+# ── Réseaux ──────────────────────────────────────────────────
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true
+  monitoring:
+    driver: bridge
