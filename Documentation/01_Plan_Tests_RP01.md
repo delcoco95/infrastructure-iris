@@ -2,9 +2,9 @@
 ## Infrastructure Sécurisée Windows Server 2022 + AD DS + NPS/RADIUS
 
 **Version :** 2.0 — Résultats de tests inclus  
-**Date :** Avril 2026 (lab Vagrant/VirtualBox)  
+**Date :** Mars 2026 (lab Vagrant/VirtualBox)  
 **Auteur :** Nedjmeddine Belloum — BTS SIO SISR  
-**Établissement :** MEDIASCHOOL Nice  
+**Établissement :** IRIS Nice  
 **Statut :** ✅ Déploiement complet validé en environnement lab
 
 ---

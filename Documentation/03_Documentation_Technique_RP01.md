@@ -266,7 +266,7 @@ Les événements d'authentification NPS sont consultables dans :
 | Hyperviseur | VirtualBox 7.x + Vagrant |
 | DC-IRIS-01 box | gusztavvargadr/windows-server-2022-standard |
 | SRV-LINUX-IRIS box | ubuntu/jammy64 |
-| Réseau privé | 192.168.50.0/24 (virtualbox__intnet: vlan_management) |
+| Réseau privé | 192.168.50.0/24 (VirtualBox host-only — accessible hôte + VMs) |
 | Date de déploiement | Avril 2026 |
 
 ### 8.2 Résultats scripts de provisioning

@@ -2,14 +2,14 @@
 ## Modernisation de l'Infrastructure Réseau MEDIASCHOOL Nice
 
 **Référence AO :** IRIS-NICE-2024-RP01  
-**Date :** Juin 2026  
+**Date :** Mars 2026  
 **Soumissionnaire :** Nedjmeddine Belloum — BTS SIO SISR  
 
 ---
 
 ## 1. Compréhension du besoin
 
-MEDIASCHOOL Nice souhaite moderniser son infrastructure réseau en remplaçant l'ancienne solution Linux/OpenLDAP/FreeRADIUS par une architecture Microsoft Windows Server 2022, plus adaptée à la gestion d'un établissement d'enseignement supérieur.
+IRIS Nice souhaite moderniser son infrastructure réseau en remplaçant l'ancienne solution Linux/OpenLDAP/FreeRADIUS par une architecture Microsoft Windows Server 2022, plus adaptée à la gestion d'un établissement d'enseignement supérieur.
 
 Les enjeux identifiés sont :
 - **Sécurité** : segmentation réseau par profil utilisateur (VLAN dynamique 802.1X)

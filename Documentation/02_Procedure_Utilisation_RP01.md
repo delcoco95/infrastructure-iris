@@ -2,7 +2,7 @@
 ## Guide de déploiement pour technicien
 
 **Version :** 1.0  
-**Date :** Juin 2026  
+**Date :** Mars 2026  
 **Auteur :** Nedjmeddine Belloum  
 **Public cible :** Technicien informatique niveau débutant/intermédiaire  
 
@@ -222,5 +222,3 @@ vagrant destroy -f
 ```
 
 ---
-
-*Document rédigé pour l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*

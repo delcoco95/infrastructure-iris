@@ -27,8 +27,7 @@ Vagrant.configure("2") do |config|
 
     dc.vm.network "private_network",
       ip: "192.168.50.10",
-      netmask: "255.255.255.0",
-      virtualbox__intnet: "vlan_management"
+      netmask: "255.255.255.0"
 
     dc.vm.provider "virtualbox" do |vb|
       vb.name   = "DC-IRIS-01"
@@ -92,8 +91,7 @@ Vagrant.configure("2") do |config|
 
     linux.vm.network "private_network",
       ip: "192.168.50.20",
-      netmask: "255.255.255.0",
-      virtualbox__intnet: "vlan_management"
+      netmask: "255.255.255.0"
 
     linux.vm.provider "virtualbox" do |vb|
       vb.name   = "SRV-LINUX-IRIS"
