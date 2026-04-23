@@ -1,8 +1,6 @@
 # Procédure d'Utilisation — RP-01 IRIS Nice
 ## Guide de déploiement pour technicien
 
-**Version :** 1.0  
-**Date :** Mars 2026  
 **Auteur :** Nedjmeddine Belloum  
 **Public cible :** Technicien informatique niveau débutant/intermédiaire  
 
