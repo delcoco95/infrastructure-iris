@@ -1,163 +1,135 @@
-# ANNEXE 7 — FICHE DE PRÉSENTATION DE LA SITUATION PROFESSIONNELLE
-## BTS SIO — Épreuve E5 — Session 2026
+# ANNEXE 7-1-A — Fiche descriptive de réalisation professionnelle
+## BTS Services informatiques aux organisations — SESSION 2026
+## Épreuve E5 - Administration des systèmes et des réseaux (option SISR)
 
 ---
+
+## RECTO — DESCRIPTION D'UNE RÉALISATION PROFESSIONNELLE
 
 | | |
 |---|---|
-| **Candidat** | Nedjmeddine Belloum |
-| **Établissement** | MEDIASCHOOL / IRIS Nice |
-| **Classe** | BTS SIO — option SISR |
-| **Référence** | IRIS-NICE-2026-RP01 |
-| **Date de réalisation** | Novembre 2025 – Avril 2026 |
+| **N° réalisation** | 1 |
+| **Nom, prénom** | Belloum Nedjmeddine |
+| **N° candidat** | *(à compléter)* |
+| **Type d'épreuve** | Contrôle en cours de formation |
+| **Date** | 23 / 03 / 2026 |
 
 ---
 
-## 1. IDENTIFICATION DE LA SITUATION
+### Organisation support de la réalisation professionnelle
 
-**Intitulé :**  
-Déploiement d'une infrastructure réseau sécurisée avec authentification 802.1X / NPS-RADIUS sur Windows Server 2022 pour l'école IRIS Nice
-
-**Contexte organisationnel :**  
-L'école IRIS Nice (établissement supérieur, ~300 utilisateurs : étudiants, professeurs, administration, visiteurs) disposait d'un réseau plat sans segmentation ni contrôle d'accès. NVTech, prestataire informatique, a été mandaté en réponse à un appel d'offre pour concevoir et déployer une infrastructure sécurisée conforme aux standards professionnels.
-
-**Durée de la situation :** 5 mois (projet long)  
-**Taille de l'équipe :** 3 personnes — Nedjmeddine Belloum (chef de projet), 2 collaborateurs
+| | |
+|---|---|
+| **Intitulé de la réalisation professionnelle** | Conception, installation et sécurisation d'une infrastructure réseau Windows Server 2022 — École IRIS Nice |
+| **Période de réalisation** | 23/03/2026 au 28/03/2026 |
+| **Lieu** | Mediaschool – IRIS Nice |
+| **Modalité** | En équipe (chef de projet : Nedjmeddine Belloum — 3 personnes) |
 
 ---
 
-## 2. DESCRIPTION DE LA SITUATION
+### Compétences travaillées
 
-### 2.1 Problématique initiale
-Le réseau existant présentait plusieurs failles critiques :
-- Réseau plat sans VLAN : un étudiant pouvait accéder aux ressources administratives
-- Aucune authentification réseau : tout équipement branché obtenait un accès total
-- Aucune supervision : pas d'alertes en cas de panne ou d'anomalie
-- Infrastructure obsolète : serveur Linux avec FreeRADIUS mal documenté, non maintenable
-
-### 2.2 Solution déployée
-
-**Couche réseau (matériel Cisco physique) :**
-- Routeur Cisco ISR 1941W (RT2-IRIS — 192.168.50.1) avec NAT et ACL inter-VLAN
-- Switch Cisco Catalyst 2960-S (SW2-IRIS — 192.168.50.2) avec 6 VLANs configurés
-- Point d'accès Wi-Fi Cisco C9105AXI-E (AP-IRIS — 192.168.50.24) — WPA2-Enterprise 802.1X
-
-**Segmentation réseau — 6 VLANs :**
-
-| VLAN | Nom | Réseau | Rôle |
-|---|---|---|---|
-| 10 | Étudiants | 192.168.10.0/24 | Accès limité (Internet + ressources pédagogiques) |
-| 20 | Professeurs | 192.168.20.0/24 | Accès étendu (ressources internes) |
-| 30 | Administration | 192.168.30.0/24 | Accès complet |
-| 40 | Invités | 192.168.40.0/24 | Internet uniquement |
-| 50 | Management IT | 192.168.50.0/24 | Serveurs, équipements actifs |
-| 99 | PRE_AUTH | 192.168.99.0/24 | Quarantaine (non authentifiés) |
-
-**Serveur DC-IRIS-01 — Windows Server 2022 (192.168.50.10) :**
-- Active Directory Domain Services (domaine : mediaschool.local)
-- DNS intégré à l'AD
-- DHCP avec 6 scopes (un par VLAN)
-- NPS/RADIUS — authentification 802.1X (assignation automatique des VLANs)
-- GPO de sécurité : Fine-Grained Password Policies, verrouillage de session, pare-feu
-- Provisioning entièrement automatisé par 6 scripts PowerShell
-
-**Serveur SRV-LINUX-IRIS — Ubuntu 22.04 (192.168.50.20) :**
-- 9 services Docker : GLPI, Nextcloud, Grafana, Prometheus, WireGuard, ClamAV, cAdvisor, phpLDAPadmin, Portainer
-- Stack de monitoring : Prometheus + Grafana + cAdvisor + Node Exporter
-- VPN WireGuard (wg-easy) pour administration distante sécurisée
-- Antivirus ClamAV avec base de signatures actualisée
-
-### 2.3 Mécanisme 802.1X (flux d'authentification)
-```
-Utilisateur            Switch SW2-IRIS          DC-IRIS-01 (NPS/RADIUS)
-     │                       │                         │
-     │ ── EAPOL Start ──────►│                         │
-     │                       │ ── RADIUS Access-Req ──►│
-     │                       │      (identifiants AD)  │
-     │                       │ ◄── RADIUS Access-Acc ──│
-     │                       │      (VLAN-ID = 10/20/30/40/99)
-     │◄── Port autorisé ─────│                         │
-     │    + VLAN assigné      │                         │
-```
+- [x] Concevoir une solution d'infrastructure réseau
+- [x] Installer, tester et déployer une solution d'infrastructure réseau
+- [x] Exploiter, dépanner et superviser une solution d'infrastructure réseau
 
 ---
 
-## 3. COMPÉTENCES BTS SIO MOBILISÉES
+### Conditions de réalisation
 
-| Code | Compétence | Application concrète dans RP01 |
-|---|---|---|
-| **B1.1** | Recenser et identifier les ressources | Inventaire équipements Cisco, VMs, services Docker, plan d'adressage IP complet |
-| **B1.2** | Exploiter les documentations | Documentation Cisco IOS, RFC 3580 (VLAN via RADIUS), PowerShell AD/NPS |
-| **B1.3** | Mettre en place les niveaux d'habilitation | 6 groupes AD, 6 politiques NPS, FGPP différenciées, GPO par OU |
-| **B2.1** | Intervenir sur les éléments du SI | Configuration Cisco CLI, scripts PowerShell, Docker Compose, Vagrant |
-| **B2.2** | Garantir la disponibilité | Monitoring Prometheus/Grafana, alertes Alertmanager, DHCP HA |
-| **B3.1** | Mettre en œuvre la sécurité | 802.1X WPA2-Enterprise, ACL inter-VLAN, VPN WireGuard, SMB Signing |
-| **B3.2** | Assurer la supervision | Prometheus + Grafana + cAdvisor + Node Exporter — dashboards temps réel |
+**Ressources :**
+- Appel d'offre IRIS-NICE-2026-RP01 fourni par Yan Bourquard (Responsable Technique)
+- Matériel Cisco disponible sur site : ISR 1941W, Catalyst 2960-S (SW2-IRIS), AP C9105AXI-E
+- Environnement de test : 2 VMs Vagrant/VirtualBox (Windows Server 2022 + Ubuntu 22.04)
+- Accès Internet pour téléchargement des outils et mises à jour
 
----
-
-## 4. ENVIRONNEMENT TECHNIQUE
-
-### Matériel physique (Cisco)
-| Équipement | Modèle | IP | Rôle |
-|---|---|---|---|
-| Routeur | Cisco ISR 1941W | 192.168.50.1 | Routage inter-VLAN, NAT, ACL |
-| Switch | Cisco Catalyst 2960-S | 192.168.50.2 | Commutation, 802.1X, trunk |
-| AP Wi-Fi | Cisco C9105AXI-E | 192.168.50.24 | WPA2-Enterprise 802.1X |
-
-### VMs (Lab Vagrant/VirtualBox)
-| VM | OS | IP | RAM | Rôle |
-|---|---|---|---|---|
-| DC-IRIS-01 | Windows Server 2022 | 192.168.50.10 | 4 Go | AD DS + DNS + DHCP + NPS |
-| SRV-LINUX-IRIS | Ubuntu 22.04 LTS | 192.168.50.20 | 2 Go | Docker (9 services) |
-
-### Technologies et outils
-- **Windows Server 2022** : AD DS, NPS, DHCP, DNS, GPO
-- **PowerShell** : 6 scripts d'automatisation (700+ lignes)
-- **Cisco IOS** : VLANs, dot1x, RADIUS, ACL, NAT
-- **Docker + Docker Compose** : orchestration 9 services
-- **Vagrant + VirtualBox** : provisioning automatisé
-- **Prometheus + Grafana** : supervision et dashboards
-- **WireGuard** : VPN administration
+**Résultats attendus :**
+- Infrastructure réseau segmentée en 6 VLANs opérationnelle sur matériel Cisco réel
+- Authentification 802.1X individuelle — NPS/RADIUS + Active Directory Windows Server 2022
+- Attribution dynamique des VLANs selon le profil AD (Étudiants/Profs/Admin/Invités/Quarantaine)
+- 9 services Docker opérationnels : GLPI, Nextcloud, Grafana, Prometheus, WireGuard, ClamAV…
+- GPO de sécurité, Fine-Grained Password Policies et supervision Prometheus/Grafana actifs
 
 ---
 
-## 5. RÉSULTATS ET VALIDATION
+### Description des ressources documentaires, matérielles et logicielles utilisées
 
-### Tests réalisés en environnement lab
-- ✅ 6 scopes DHCP actifs (un par VLAN)
-- ✅ 3 clients RADIUS configurés (SW2-IRIS, RT2-IRIS, AP-IRIS)
-- ✅ 6 politiques NPS avec assignation VLAN
-- ✅ Latence DC ↔ SRV-LINUX < 2 ms
-- ✅ 9 services Docker opérationnels
-- ✅ Grafana : dashboards CPU, RAM, réseau, Docker temps réel
-- ✅ VPN WireGuard : tunnel actif
+**Ressources documentaires :**
+- Documentation Cisco IOS — Catalyst 2960-S, ISR 1941W
+- Documentation Microsoft NPS/RADIUS et Active Directory Domain Services
+- RFC 3580 — IEEE 802.1X RADIUS Usage Guidelines (VLAN via Tunnel Attributes)
+- Recommandations ANSSI — sécurisation routeurs et commutateurs
+- Appel d'offre IRIS-NICE-2026-RP01
 
-### Indicateurs de sécurité
-- VLAN 99 quarantaine : équipements non authentifiés isolés des VLANs internes
-- FGPP : admins — 12 caractères min, blocage 3 tentatives ; étudiants — 8 caractères
-- ACL : blocage trafic croisé entre VLANs non autorisés
-- SMB Signing : activé sur tout le domaine
-
----
-
-## 6. DIFFICULTÉS RENCONTRÉES ET SOLUTIONS
-
-| Difficulté | Cause | Solution appliquée |
-|---|---|---|
-| DC inaccessible après promotion AD | WinRM désactivé lors de la promotion | Attente 30s, reconnexion via PowerShell Remoting |
-| DHCP ne distribue pas d'IP | Service non autorisé dans l'AD | `Add-DhcpServerInDC` dans le script |
-| NPS ne reconnaît pas les clients RADIUS | Nom du client = FQDN requis | Utilisation de l'IP directement dans `netsh nps add client` |
-| Clavier QWERTY sur DC-IRIS-01 | Locale anglaise par défaut Vagrant | `Set-WinUserLanguageList fr-FR` via PSSession distante |
-| VMs inaccessibles depuis l'hôte | `virtualbox__intnet` = réseau interne isolé | Suppression de `virtualbox__intnet` → adaptateur host-only |
+**Matérielles et logicielles utilisées :**
+- Cisco ISR 1941W — Routeur principal (routage inter-VLAN, NAT, ACL)
+- Cisco Catalyst 2960-S (SW2-IRIS) — Switch 48 ports (802.1X, 6 VLANs, trunk)
+- Cisco C9105AXI-E — Point d'accès Wi-Fi (WPA2-Enterprise 802.1X)
+- DC-IRIS-01 : Windows Server 2022 Standard — AD DS, DNS, DHCP, NPS (RADIUS) — 4 Go RAM
+- SRV-LINUX-IRIS : Ubuntu 22.04 LTS — Docker Compose, 9 services — 2 Go RAM
+- Vagrant + VirtualBox — provisioning automatisé des VMs
+- PowerShell — 6 scripts d'automatisation (~700 lignes)
 
 ---
 
-## 7. LIENS
+### Modalités d'accès aux productions et à leur documentation
 
 - **GitHub :** https://github.com/delcoco95/infrastructure-iris
 - **Portfolio :** https://delcoco95.github.io/portfolio-nedj/
-- **Référence BTS SIO :** IRIS-NICE-2026-RP01
+- **Maquette démontrable :** `vagrant up` → services démarrés automatiquement via provisioning
+
+---
+
+## VERSO — Descriptif de la réalisation professionnelle
+
+---
+
+**Objectif :**
+
+Réponse à l'appel d'offre IRIS-NICE-2026-RP01 pour la conception et le déploiement d'une infrastructure réseau sécurisée complète pour l'école IRIS Nice. L'infrastructure existante était un réseau plat sans segmentation, authentification ni supervision. En tant que chef de projet, j'ai coordonné une équipe de 3 personnes sur 5 semaines.
+
+---
+
+**Ce qui a été réalisé :**
+
+**1. Configuration Cisco (matériel physique) :**
+- Routeur ISR 1941W (RT2-IRIS — 192.168.50.1) : routage inter-VLAN (Router-on-a-Stick), 6 sous-interfaces, ACL étendues inter-VLAN, NAT vers Internet, SSH v2, syslog
+- Switch Catalyst 2960-S (SW2-IRIS — 192.168.50.2) : 6 VLANs, trunk Gi0/1, dot1x sur tous les ports, Guest VLAN 40, VLAN 99 quarantaine, port-security
+- AP Cisco C9105AXI-E (AP-IRIS — 192.168.50.24) : SSID IRIS-SECURE, WPA2-Enterprise adossé à NPS/RADIUS
+
+**2. Serveur DC-IRIS-01 — Windows Server 2022 (192.168.50.10) :**
+- Active Directory Domain Services : forêt `mediaschool.local`, 5 OUs (SISR, SLAM, Professeurs, Admin, Invités), 20+ utilisateurs test
+- DNS intégré à l'AD — résolution interne et externe
+- DHCP : 6 scopes avec plages dédiées par VLAN (VLAN 10 → 20 → 30 → 40 → 50 → 99)
+- NPS (Network Policy Server / RADIUS) : 3 clients RADIUS (SW2-IRIS, RT2-IRIS, AP-IRIS), 6 politiques réseau avec assignation VLAN automatique via Tunnel Attributes RFC 3580
+- GPO : verrouillage de session (10 min), SMB Signing, pare-feu Windows actif, Fine-Grained Password Policies (FGPP) différenciées par groupe
+- Provisioning automatisé par 6 scripts PowerShell séquentiels (~700 lignes) : install_roles → configure_ad → configure_dhcp → configure_nps → configure_users → configure_gpo
+
+**3. Serveur SRV-LINUX-IRIS — Ubuntu 22.04 (192.168.50.20) :**
+- 9 services Docker via docker-compose.yml : GLPI (parc + tickets), Nextcloud (stockage pédagogique), Grafana, Prometheus, cAdvisor, Node Exporter, WireGuard (wg-easy), ClamAV, Portainer
+- Stack monitoring : Prometheus scrape toutes les 15s, Grafana dashboards CPU/RAM/réseau/Docker
+- VPN WireGuard : tunnel administration distante via VLAN 50
+
+**4. Tests et validation :**
+- 6 scopes DHCP actifs et distribués
+- 3 clients RADIUS configurés, 6 politiques NPS actives
+- 9 services Docker opérationnels (tous les healthchecks verts)
+- Communication DC-IRIS ↔ SRV-LINUX < 2 ms de latence
+- 22 tests validés en environnement lab (31 nécessitent le matériel Cisco physique)
+
+**5. Documentation livrée :**
+- 10 documents Markdown : plan de tests (T-01 à T-53), procédures, doc technique, schéma réseau complet, benchmark 9 technologies, credentials lab, préparation oral E5/E6
+
+---
+
+**Compétences mobilisées :**
+- Configuration Cisco IOS : VLANs, dot1x 802.1X, ACL étendues, DHCP, SSH, trunk
+- Administration Windows Server 2022 : AD DS, NPS/RADIUS, DHCP, DNS, GPO, FGPP
+- Scripting PowerShell : automatisation complète du provisioning (6 scripts)
+- Administration Linux Ubuntu 22.04 : Docker Compose, UFW, systemd, réseau
+- Supervision : Prometheus, Grafana, cAdvisor, Node Exporter
+- Sécurité réseau : 802.1X WPA2-Enterprise, ACL, port-security, VPN WireGuard
+- Gestion de projet : chef de projet en équipe de 3, RACI, documentation technique
 
 ---
 
