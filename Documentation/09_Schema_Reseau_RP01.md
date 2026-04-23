@@ -1,9 +1,5 @@
 # Schéma Réseau Complet — RP-01 IRIS Nice
 
-**Version :** 1.0  
-**Auteur :** Nedjmeddine Belloum — BTS SIO SISR  
-**Date :** Avril 2026
-
 ---
 
 ## 1. Architecture générale (ASCII)
@@ -279,7 +275,3 @@ Note : Les deux VMs communiquent entre elles via 192.168.50.x
        RADIUS SW → DC      : 192.168.50.10:1812 (UDP)
        RADIUS accounting   : 192.168.50.10:1813 (UDP)
 ```
-
----
-
-*Document créé pour l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*
