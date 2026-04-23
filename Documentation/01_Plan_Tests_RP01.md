@@ -1,10 +1,7 @@
 # Plan de Tests — RP-01 IRIS Nice
 ## Infrastructure Sécurisée Windows Server 2022 + AD DS + NPS/RADIUS
 
-**Version :** 2.0 — Résultats de tests inclus  
-**Date :** Mars 2026 (lab Vagrant/VirtualBox)  
 **Auteur :** Nedjmeddine Belloum — BTS SIO SISR  
-**Établissement :** IRIS Nice  
 **Statut :** ✅ Déploiement complet validé en environnement lab
 
 ---
@@ -140,4 +137,3 @@ Ce document liste l'ensemble des tests de validation à réaliser lors de la mis
 
 ---
 
-*Document généré dans le cadre de l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*
