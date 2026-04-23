@@ -1,9 +1,6 @@
 # Annexe Technique — RP-01 IRIS Nice
 ## Configurations commentées et références
 
-**Version :** 1.0  
-**Auteur :** Nedjmeddine Belloum — BTS SIO SISR  
-
 ---
 
 ## A1 — Références des scripts PowerShell
@@ -145,6 +142,3 @@ show ip nat translations
 show dot1x all summary
 ```
 
----
-
-*Document rédigé pour l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*
