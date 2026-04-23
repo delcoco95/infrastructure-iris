@@ -1,8 +1,5 @@
 # RP-01 — Infrastructure Sécurisée Windows Server 2022 — IRIS Nice
 
-**Épreuve E5 — BTS SIO option SISR** | Mediaschool Nice  
-Auteur : **Nedjmeddine Belloum** — Chef de projet
-
 ---
 
 ## 🎯 Contexte
@@ -137,20 +134,7 @@ vagrant up
 
 ---
 
-## 🔗 Compétences BTS SIO mobilisées
-
-| Compétence | Description |
-|---|---|
-| **B1.1** | Gérer le patrimoine informatique — AD, GPO, DHCP |
-| **B1.2** | Répondre aux incidents — NPS, pare-feu, VLAN quarantaine |
-| **B1.4** | Travailler en mode projet — appel d'offre, automatisation Vagrant |
-| **B1.5** | Mettre à disposition un service informatique — Docker, provisioning |
-
----
-
 ## 👤 Auteur
 
 **Nedjmeddine Belloum** — BTS SIO option SISR — Chef de projet  
-Centre de formation : Mediaschool Nice (IRIS)  
-Période : Février — Mars 2026  
 Portfolio : [https://delcoco95.github.io/portfolio-nedj/](https://delcoco95.github.io/portfolio-nedj/)
