@@ -1,10 +1,6 @@
 # Réponse à Appel d'Offres — RP-01 IRIS Nice
 ## Modernisation de l'Infrastructure Réseau MEDIASCHOOL Nice
 
-**Référence AO :** IRIS-NICE-2024-RP01  
-**Date :** Mars 2026  
-**Soumissionnaire :** Nedjmeddine Belloum — BTS SIO SISR  
-
 ---
 
 ## 1. Compréhension du besoin
@@ -125,5 +121,3 @@ La solution applique le principe de **moindre privilège** à plusieurs niveaux 
 | RGPD | Gestion des données personnelles étudiants |
 
 ---
-
-*Offre soumise dans le cadre de l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*

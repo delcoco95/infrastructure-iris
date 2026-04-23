@@ -1,8 +1,5 @@
 # Benchmark Services & Outils — RP-01 IRIS Nice
 
-**Version :** 1.0  
-**Auteur :** Nedjmeddine Belloum — BTS SIO SISR  
-**Date :** Avril 2026  
 **Objectif :** Justification technique des choix technologiques par comparaison avec les alternatives
 
 ---
@@ -234,4 +231,3 @@
 
 ---
 
-*Document rédigé pour l'épreuve E5 BTS SIO SISR — MEDIASCHOOL Nice*
