@@ -110,7 +110,7 @@ try {
         -ScopeId    "192.168.50.0" `
         -StartRange "192.168.50.1" `
         -EndRange   "192.168.50.30" `
-        -ErrorAction Stop
+        -ErrorAction SilentlyContinue
     Write-Host "[OK] Exclusion VLAN50 : 192.168.50.1-30 (équipements fixes)."
 
     # Option DNS secondaire (8.8.8.8) pour les scopes utilisant le DC comme DNS

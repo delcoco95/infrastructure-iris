@@ -1,0 +1,176 @@
+! =============================================================================
+! AP Cisco C9105AXI-E — Mode EWC (Embedded Wireless Controller)
+! RP01 — Infra Securite IRIS Nice | NVTech
+! RP06 — PRA/PCA/Backup IRIS Nice | NVTech
+!
+! Fonctionne pour les 2 projets : meme IP RADIUS 192.168.50.10
+!   - RP01 actif : NPS sur DC-IRIS-01 (192.168.50.10)
+!   - RP06 actif : FreeRADIUS sur SRV_MAIN (192.168.50.10)
+!
+! IP Management AP : 192.168.50.5 (CONFIGURE EN DAY0 GUI) / VLAN 50
+! Cle RADIUS       : RadiusAP_IRIS_2026!
+! SSID : IRIS (unique, VLAN dynamique par RADIUS)
+! =============================================================================
+!
+! ACCES INITIAL :
+!   1. L'AP obtient son IP en DHCP sur VLAN 50 (gateway 192.168.50.1)
+!   2. Se connecter : https://<IP-obtenue> ou ssh admin@<IP-obtenue>
+!   3. Appliquer la config ci-dessous
+!
+! -----------------------------------------------------------------------------
+! ETAPE 1 : Configuration de base EWC
+! -----------------------------------------------------------------------------
+enable
+configure terminal
+hostname AP2-IRIS
+
+! IP statique de management (apres connexion initiale en DHCP)
+interface Vlan50
+ ip address 192.168.50.5 255.255.255.0
+ no shutdown
+
+! Interface de management EWC
+wireless management interface Vlan50
+
+! NTP (essentiel pour la validite des certificats 802.1X)
+ntp server 192.168.50.1
+clock timezone CET 1 0
+
+! Domaine et DNS
+ip domain-name iris.local
+ip name-server 192.168.50.1
+
+! Compte admin EWC
+username admin privilege 15 secret NVTech_Admin2026!
+enable secret NVTech_Admin2026!
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 15
+ transport input ssh
+ login local
+ access-class 50 in
+ip access-list standard 50
+ permit 192.168.50.0 0.0.0.255
+ deny any log
+
+! Syslog vers serveur de supervision
+logging host 192.168.50.10
+logging trap informational
+
+! Desactiver services inutiles
+no ip http server
+no cdp run
+
+! -----------------------------------------------------------------------------
+! ETAPE 2 : RADIUS / AAA
+! Pointe vers 192.168.50.10 :
+!   - RP01 actif : NPS sur DC-IRIS-01
+!   - RP06 actif : FreeRADIUS dans Docker sur SRV_MAIN
+! -----------------------------------------------------------------------------
+aaa new-model
+
+! Serveur RADIUS principal
+radius server RADIUS-IRIS-PRIMARY
+ address ipv4 192.168.50.10 auth-port 1812 acct-port 1813
+ key RadiusAP_IRIS_2026!
+ timeout 5
+ retransmit 3
+
+! Groupe RADIUS
+aaa group server radius RADIUS-IRIS
+ server name RADIUS-IRIS-PRIMARY
+ deadtime 10
+
+! Methodes AAA pour 802.1X WiFi
+aaa authentication dot1x RADIUS-DOT1X group RADIUS-IRIS
+aaa authorization network RADIUS-DOT1X group RADIUS-IRIS
+aaa accounting dot1x RADIUS-DOT1X start-stop group RADIUS-IRIS
+
+! -----------------------------------------------------------------------------
+! ETAPE 3 : Profils de politique (VLAN cible par SSID)
+! Le VLAN final est decide par la reponse RADIUS (Tunnel-Private-Group-ID)
+! -----------------------------------------------------------------------------
+
+wireless profile policy POLICY-ETUDIANTS
+ vlan 10
+ no shutdown
+
+wireless profile policy POLICY-PROFS
+ vlan 20
+ no shutdown
+
+wireless profile policy POLICY-GUEST
+ vlan 40
+ no shutdown
+
+! -----------------------------------------------------------------------------
+! ETAPE 4 : WLANs (SSIDs) — tous en WPA2-Enterprise (802.1X)
+! -----------------------------------------------------------------------------
+
+! WLAN 1 — IRIS-Etudiants → VLAN 10
+wlan IRIS-Etudiants 1 IRIS-Etudiants
+ no security wpa akm psk
+ security wpa akm dot1x
+ security wpa wpa2
+ security wpa wpa2 ciphers aes
+ security dot1x authentication-list RADIUS-DOT1X
+ radio policy dot11 24ghz
+ radio policy dot11 5ghz
+ no shutdown
+
+! WLAN 2 — IRIS-Profs → VLAN 20
+wlan IRIS-Profs 2 IRIS-Profs
+ no security wpa akm psk
+ security wpa akm dot1x
+ security wpa wpa2
+ security wpa wpa2 ciphers aes
+ security dot1x authentication-list RADIUS-DOT1X
+ radio policy dot11 24ghz
+ radio policy dot11 5ghz
+ no shutdown
+
+! WLAN 3 — IRIS-Guest → VLAN 40
+wlan IRIS-Guest 3 IRIS-Guest
+ no security wpa akm psk
+ security wpa akm dot1x
+ security wpa wpa2
+ security wpa wpa2 ciphers aes
+ security dot1x authentication-list RADIUS-DOT1X
+ radio policy dot11 24ghz
+ radio policy dot11 5ghz
+ no shutdown
+
+! -----------------------------------------------------------------------------
+! ETAPE 5 : Tags (association SSID -> profil VLAN)
+! -----------------------------------------------------------------------------
+
+wireless tag policy POLICY-TAG-IRIS
+ wlan IRIS-Etudiants policy POLICY-ETUDIANTS
+ wlan IRIS-Profs policy POLICY-PROFS
+ wlan IRIS-Guest policy POLICY-GUEST
+
+wireless tag site SITE-TAG-IRIS
+ ap-profile default-ap-profile
+ no local-site
+
+! -----------------------------------------------------------------------------
+! ETAPE 6 : Application des tags a l'AP lui-meme
+! Remplacer XX:XX:XX:XX:XX:XX par la MAC de l'AP (show ap summary)
+! -----------------------------------------------------------------------------
+ap XX:XX:XX:XX:XX:XX
+ name AP2-IRIS
+ tag policy POLICY-TAG-IRIS
+ tag site SITE-TAG-IRIS
+
+! -----------------------------------------------------------------------------
+! ETAPE 7 : RF — Optimisation radio
+! -----------------------------------------------------------------------------
+ap dot11 24ghz txpower global auto
+ap dot11 5ghz txpower global auto
+ap dot11 24ghz channel global auto
+ap dot11 5ghz channel global auto
+
+end
+write memory

@@ -1,4 +1,4 @@
-# Schéma Réseau Complet — RP-01 IRIS Nice
+﻿# Schéma Réseau Complet — RP-01 IRIS Nice
 
 ---
 
@@ -83,6 +83,7 @@
 | SW2-IRIS | VLAN 50 SVI | 192.168.50.2 | /24 | 50 | Management switch |
 | DC-IRIS-01 | NIC | 192.168.50.10 | /24 | 50 | AD DS / DNS / DHCP / NPS |
 | SRV-LINUX-IRIS | NIC | 192.168.50.20 | /24 | 50 | Docker services |
+| AP2-IRIS | NIC VLAN50 | 192.168.50.5 | /24 | 50 | WiFi 802.1X (EWC C9105AXI-E) |
 | DHCP Étudiants | Pool | 192.168.10.31–254 | /24 | 10 | Attribution automatique |
 | DHCP Profs | Pool | 192.168.20.31–254 | /24 | 20 | Attribution automatique |
 | DHCP Admin | Pool | 192.168.30.31–254 | /24 | 30 | Attribution automatique |
@@ -98,6 +99,7 @@
 | 192.168.50.2 | SW2-IRIS (management) |
 | 192.168.50.10 | DC-IRIS-01 (fixe) |
 | 192.168.50.20 | SRV-LINUX-IRIS (fixe) |
+| 192.168.50.5 | AP2-IRIS (fixe) |
 | 192.168.50.3–9 | Réservé équipements futurs |
 | 192.168.50.11–19 | Réservé DCs secondaires |
 | 192.168.50.21–30 | Réservé serveurs |
@@ -125,19 +127,24 @@
                                     │    Active Directory │
                                     │  mediaschool.local  │
                                     │  OU=Etudiants?      │
-                                    │  → Groupe SRV_Etud  │
+                                    │  → Groupe GRP_Etudiants_SISR / GRP_Etudiants_SLAM  │
                                     └─────────┬──────────┘
                                               │
                           ┌───────────────────▼────────────────────┐
                           │        NPS — Politique réseau           │
                           │                                         │
-                          │  NP_Auth_Etudiants                      │
-                          │  Conditions : Groupe SRV_Etudiants      │
+                          │  NP_Etudiants                      │
+                          │  Conditions : GRP_Etudiants_SISR + GRP_Etudiants_SLAM      │
                           │  Résultat : Access-Accept               │
                           │  Attributs RADIUS (RFC 3580) :          │
                           │    64 (Tunnel-Type)       = 13 (VLAN)   │
                           │    65 (Tunnel-Medium-Type)= 6  (802)    │
                           │    81 (Tunnel-PG-ID)      = "10"        │
+                           │                                         │
+                           │  ⚠ NOTE : Attributs RADIUS valables pour │
+                           │  802.1X câblé (SW2-IRIS) UNIQUEMENT.    │
+                           │  Pour WiFi (AP2-IRIS) : VLAN statique   │
+                           │  dans la policy AP (Option A).          │
                           └───────────────────┬────────────────────┘
                                               │ RADIUS Access-Accept + VLAN 10
                                     ┌─────────▼──────────┐
@@ -150,12 +157,12 @@ Résultats par groupe AD :
 ┌──────────────────────┬────────────────────┬──────────┬────────────────────┐
 │ Groupe AD            │ Politique NPS       │ VLAN     │ Réseau             │
 ├──────────────────────┼────────────────────┼──────────┼────────────────────┤
-│ SRV_Etudiants        │ NP_Auth_Etudiants   │ VLAN 10  │ 192.168.10.0/24   │
-│ SRV_Profs            │ NP_Auth_Profs       │ VLAN 20  │ 192.168.20.0/24   │
-│ SRV_Administration   │ NP_Auth_Admin       │ VLAN 30  │ 192.168.30.0/24   │
-│ SRV_Guests           │ NP_Auth_Guests      │ VLAN 40  │ 192.168.40.0/24   │
-│ SRV_IT               │ NP_Auth_IT          │ VLAN 50  │ 192.168.50.0/24   │
-│ (aucun / inconnu)    │ NP_Default_PreAuth  │ VLAN 99  │ 192.168.99.0/24   │
+│ SRV_Etudiants        │ NP_Etudiants   │ VLAN 10  │ 192.168.10.0/24   │
+│ GRP_Profs               │ NP_Profs            │ VLAN 20  │ 192.168.20.0/24   │
+│ GRP_Administration      │ NP_Admin            │ VLAN 30  │ 192.168.30.0/24   │
+│ GRP_Invites             │ NP_Guest            │ VLAN 40  │ 192.168.40.0/24   │
+│ GRP_IT_Admin            │ (NPS pass-through)  │ VLAN 50  │ 192.168.50.0/24   │
+│ (aucun / inconnu)       │ (Guest VLAN 802.1X) │ VLAN 99  │ 192.168.99.0/24   │
 └──────────────────────┴────────────────────┴──────────┴────────────────────┘
 ```
 
@@ -275,3 +282,66 @@ Note : Les deux VMs communiquent entre elles via 192.168.50.x
        RADIUS SW → DC      : 192.168.50.10:1812 (UDP)
        RADIUS accounting   : 192.168.50.10:1813 (UDP)
 ```
+
+---
+
+## 8. Architecture WiFi — AP2-IRIS (4 SSIDs, Option A)
+
+`
+                    AP2-IRIS (Cisco C9105AXI-E EWC — 192.168.50.5)
+                    ┌────────────────────────────────────────────────┐
+                    │          EWC (Embedded Wireless Controller)     │
+                    │          Firmware : IOS-XE 17.9.8.5            │
+                    │                                                 │
+                    │  ┌──────────────────────────────────────────┐  │
+                    │  │  Policy Tag : PTAG-IRIS                  │  │
+                    │  │  Flex Profile : default-flex-profile     │  │
+                    │  └──────────────────────────────────────────┘  │
+                    │                                                 │
+                    │  WLAN 1  IRIS-WIFI    POLICY-ETUDIANTS VLAN 10 │
+                    │  WLAN 2  IRIS-PROFS   POLICY-PROFS     VLAN 20 │
+                    │  WLAN 3  IRIS-ADMIN   POLICY-ADMIN     VLAN 30 │
+                    │  WLAN 4  IRIS-GUEST   POLICY-INVITES   VLAN 40 │
+                    │                                                 │
+                    │  Auth-list : DOT1X-IRIS → NPS-DC-IRIS-GROUP    │
+                    │             → DC-IRIS-01:1812/1813              │
+                    └────────────────────────────────────────────────┘
+
+Flux d'authentification WiFi 802.1X (PEAP/MSCHAPv2) :
+
+[Client WiFi]
+    │ 1. Associe au SSID (ex: IRIS-WIFI)
+    │
+[AP2-IRIS EWC]
+    │ 2. RADIUS Access-Request → NPS (192.168.50.10:1812)
+    │
+[DC-IRIS-01 — NPS]
+    │ 3. Vérifie identifiants dans AD (PEAP/MSCHAPv2)
+    │ 4. Consulte politiques réseau :
+    │    - NP_Etudiants (ordre 1) → GRP_Etudiants_SISR + GRP_Etudiants_SLAM
+    │    - NP_Profs     (ordre 2) → GRP_Profs
+    │    - NP_Admin     (ordre 3) → GRP_Administration
+    │    - NP_Guest     (ordre 4) → GRP_Invites
+    │ 5. RADIUS Access-Accept (sans Tunnel attributes)
+    │
+[AP2-IRIS EWC]
+    │ 6. Attribution VLAN STATIQUE défini dans la policy AP
+    │    (PAS via RADIUS Tunnel-Pvt-Group-ID — incompatible EWC 17.9 + FlexConnect)
+    │ 7. Client obtient IP DHCP du scope correspondant
+
+⚠ LIMITATION EWC 17.9.8.5 : aaa-override + FlexConnect local switching provoque
+  "VLAN failure". Solution : Option A — VLAN statique par policy AP dédiée par SSID.
+`
+
+### Politiques NPS (état FINAL)
+
+| Politique | Ordre | Conditions | Résultat |
+|-----------|-------|------------|---------|
+| CRP_EAP_8021X | — | Toutes connexions 802.1X | Forward au NPS local |
+| NP_Etudiants | 1 | GRP_Etudiants_SISR + GRP_Etudiants_SLAM, NAS-Port-Type=19 | GRANTED |
+| NP_Profs | 2 | GRP_Profs | GRANTED |
+| NP_Admin | 3 | GRP_Administration | GRANTED |
+| NP_Guest | 4 | GRP_Invites | GRANTED |
+
+> **Important :** L'attribution VLAN se fait côté AP (statique dans la policy).  
+> NPS n'envoie PAS d'attributs Tunnel-Pvt-Group-ID pour le WiFi.

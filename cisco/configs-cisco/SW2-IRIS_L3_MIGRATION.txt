@@ -1,0 +1,248 @@
+! ============================================================
+! SW2-IRIS_L3_MIGRATION.txt
+! Cisco Catalyst 2960-S → Cœur réseau L3
+! Projet : IRIS-NICE-2024-RP01
+! Auteur  : Nedjmeddine Belloum
+!
+! PRÉ-REQUIS : image LAN Base confirmée (show version)
+! IMPACT     : reload obligatoire (fenêtre de maintenance)
+! ============================================================
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 0 — Vérifications préalables (READ-ONLY, no change)
+! ──────────────────────────────────────────────────────────
+! show version | include Software
+! show sdm prefer
+! show ip interface brief
+! show vlan brief
+! ──────────────────────────────────────────────────────────
+
+enable
+configure terminal
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 1 — Activer le SDM routing (nécessite reload)
+! ──────────────────────────────────────────────────────────
+sdm prefer lanbase-routing
+!
+! Appliquer le reload MAINTENANT, puis reprendre à l'étape 2
+! ──────────────────────────────────────────────────────────
+! end
+! reload
+! ──────────────────────────────────────────────────────────
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 2 — Après reload : activer le routage IP
+! ──────────────────────────────────────────────────────────
+enable
+configure terminal
+
+ip routing
+!
+! VÉRIFICATION : show ip routing → "IP routing is enabled"
+!
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 3 — Supprimer l'ancien default-gateway L2
+! (incompatible avec ip routing activé)
+! ──────────────────────────────────────────────────────────
+no ip default-gateway 192.168.50.1
+!
+! NOTE : Sans RT2-IRIS, pas de route par défaut vers internet.
+! Si une nouvelle passerelle est disponible ultérieurement :
+!   ip route 0.0.0.0 0.0.0.0 [IP_NOUVELLE_GATEWAY]
+! Pour l'instant — routage inter-VLAN local uniquement.
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 4 — SVIs inter-VLAN avec DHCP relay
+! (ip helper-address = DC-IRIS-01 192.168.50.10)
+! ──────────────────────────────────────────────────────────
+
+interface Vlan10
+ description ETUDIANTS-GW
+ ip address 192.168.10.1 255.255.255.0
+ ip helper-address 192.168.50.10
+ ! ACL optionnelle : isolation inter-VLAN (bloquer VLAN10→50)
+ ip access-group ACL_VLAN10_IN in
+ no shutdown
+!
+interface Vlan20
+ description PROFS-GW
+ ip address 192.168.20.1 255.255.255.0
+ ip helper-address 192.168.50.10
+ ip access-group ACL_VLAN20_IN in
+ no shutdown
+!
+interface Vlan30
+ description ADMINISTRATION-GW
+ ip address 192.168.30.1 255.255.255.0
+ ip helper-address 192.168.50.10
+ ip access-group ACL_VLAN30_IN in
+ no shutdown
+!
+interface Vlan40
+ description GUEST-GW
+ ip address 192.168.40.1 255.255.255.0
+ ip helper-address 192.168.50.10
+ ip access-group ACL_VLAN40_IN in
+ no shutdown
+!
+interface Vlan50
+ description MANAGEMENT-IT-GW
+ ip address 192.168.50.2 255.255.255.0
+ ! Pas de helper ici : DC est dans ce VLAN
+ no shutdown
+!
+interface Vlan99
+ description PRE-AUTH-QUARANTAINE-GW
+ ip address 192.168.99.1 255.255.255.0
+ ip helper-address 192.168.50.10
+ ip access-group ACL_VLAN99_IN in
+ no shutdown
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 5 — ACLs d'isolation inter-VLAN (appliquer sur SVI)
+! Principe : chaque VLAN ne peut PAS accéder au VLAN 50
+! ni aux autres VLANs internes (sauf VLAN 50 = management)
+! ──────────────────────────────────────────────────────────
+
+! VLAN 10 (Étudiants) — accès internet uniquement (via route défaut)
+ip access-list extended ACL_VLAN10_IN
+ ! Autoriser DHCP request (avant attribution IP)
+ permit udp any host 192.168.10.1 eq 67
+ permit udp any host 192.168.10.1 eq 68
+ ! Autoriser DNS vers DC
+ permit udp 192.168.10.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit tcp 192.168.10.0 0.0.0.255 host 192.168.50.10 eq 53
+ ! Autoriser NTP vers DC
+ permit udp 192.168.10.0 0.0.0.255 host 192.168.50.10 eq 123
+ ! Autoriser RADIUS (NPS) — nécessaire pour re-auth 802.1X
+ permit udp 192.168.10.0 0.0.0.255 host 192.168.50.10 eq 1812
+ ! Bloquer accès aux VLANs internes
+ deny ip 192.168.10.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ deny ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255 log
+ deny ip 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255 log
+ deny ip 192.168.10.0 0.0.0.255 192.168.40.0 0.0.0.255 log
+ deny ip 192.168.10.0 0.0.0.255 192.168.99.0 0.0.0.255 log
+ ! Autoriser le reste (internet — si route par défaut présente)
+ permit ip any any
+!
+! VLAN 20 (Profs) — accès internet + VLAN 10 en lecture (ex: partage)
+ip access-list extended ACL_VLAN20_IN
+ permit udp any host 192.168.20.1 eq 67
+ permit udp any host 192.168.20.1 eq 68
+ permit udp 192.168.20.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit tcp 192.168.20.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit udp 192.168.20.0 0.0.0.255 host 192.168.50.10 eq 123
+ permit udp 192.168.20.0 0.0.0.255 host 192.168.50.10 eq 1812
+ deny ip 192.168.20.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ deny ip 192.168.20.0 0.0.0.255 192.168.30.0 0.0.0.255 log
+ deny ip 192.168.20.0 0.0.0.255 192.168.40.0 0.0.0.255 log
+ deny ip 192.168.20.0 0.0.0.255 192.168.99.0 0.0.0.255 log
+ permit ip any any
+!
+! VLAN 30 (Administration) — similaire à Profs
+ip access-list extended ACL_VLAN30_IN
+ permit udp any host 192.168.30.1 eq 67
+ permit udp any host 192.168.30.1 eq 68
+ permit udp 192.168.30.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit tcp 192.168.30.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit udp 192.168.30.0 0.0.0.255 host 192.168.50.10 eq 123
+ permit udp 192.168.30.0 0.0.0.255 host 192.168.50.10 eq 1812
+ deny ip 192.168.30.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255 log
+ deny ip 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255 log
+ deny ip 192.168.30.0 0.0.0.255 192.168.40.0 0.0.0.255 log
+ deny ip 192.168.30.0 0.0.0.255 192.168.99.0 0.0.0.255 log
+ permit ip any any
+!
+! VLAN 40 (Guest) — isolation totale, internet seulement
+ip access-list extended ACL_VLAN40_IN
+ permit udp any host 192.168.40.1 eq 67
+ permit udp any host 192.168.40.1 eq 68
+ permit udp 192.168.40.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit tcp 192.168.40.0 0.0.0.255 host 192.168.50.10 eq 53
+ deny ip 192.168.40.0 0.0.0.255 192.168.10.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.20.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.30.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.99.0 0.0.0.255 log
+ permit tcp any any eq 80
+ permit tcp any any eq 443
+ deny ip any any log
+!
+! VLAN 99 (PRE_AUTH) — quarantaine stricte
+ip access-list extended ACL_VLAN99_IN
+ permit udp any host 192.168.99.1 eq 67
+ permit udp any host 192.168.99.1 eq 68
+ permit udp 192.168.99.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit tcp 192.168.99.0 0.0.0.255 host 192.168.50.10 eq 53
+ permit udp 192.168.99.0 0.0.0.255 host 192.168.50.10 eq 1812
+ permit udp 192.168.99.0 0.0.0.255 host 192.168.50.10 eq 1813
+ deny ip 192.168.99.0 0.0.0.255 192.168.10.0 0.0.0.255 log
+ deny ip 192.168.99.0 0.0.0.255 192.168.20.0 0.0.0.255 log
+ deny ip 192.168.99.0 0.0.0.255 192.168.30.0 0.0.0.255 log
+ deny ip 192.168.99.0 0.0.0.255 192.168.40.0 0.0.0.255 log
+ deny ip 192.168.99.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ permit ip any any
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 6 — Corriger DHCP Snooping (bug silencieux critique)
+! Ajouter Fa0/1 (DC-IRIS-01) comme trusted pour DHCP
+! ──────────────────────────────────────────────────────────
+ip dhcp snooping trust interface FastEthernet0/1
+!
+! NOTE : Gi0/1 vers RT2-IRIS — si le routeur est débranché,
+! supprimer ce trust (propre) :
+no ip dhcp snooping trust interface GigabitEthernet0/1
+!
+! Vérification : show ip dhcp snooping
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 7 — Améliorer robustesse 802.1X sur ports accès
+! Ajouter : auth-fail VLAN, server-dead VLAN, guest VLAN
+! ──────────────────────────────────────────────────────────
+interface range FastEthernet0/10 - 29
+ ! Si auth échoue (mauvais creds) → VLAN 99 quarantaine
+ authentication event fail action authorize vlan 99
+ ! Si RADIUS injoignable → VLAN 99 (éviter blocage complet)
+ authentication event server dead action reinitialize vlan 99
+ authentication event server dead action authorize vlan 99
+ ! Si le client ne fait pas de 802.1X → VLAN 99 par défaut
+ authentication event no-response action authorize vlan 99
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 8 — Désactiver / isoler le port Gi0/1 vers RT2-IRIS
+! (routeur débranché — port dangling, risque de boucle STP)
+! ──────────────────────────────────────────────────────────
+interface GigabitEthernet0/1
+ description UPLINK-RT2-IRIS-DEBRANCHE
+ shutdown
+ ! Réactiver si RT2-IRIS reconnecté : no shutdown
+
+! ──────────────────────────────────────────────────────────
+! ÉTAPE 9 — NTP : le switch pointe vers DC (déjà OK dans config)
+! Vérification : show ntp status / show ntp associations
+! ──────────────────────────────────────────────────────────
+! ntp server 192.168.50.10   ← déjà configuré, vérifier état
+
+! ──────────────────────────────────────────────────────────
+! SAUVEGARDE
+! ──────────────────────────────────────────────────────────
+end
+write memory
+
+! ──────────────────────────────────────────────────────────
+! COMMANDES DE VÉRIFICATION POST-MIGRATION
+! ──────────────────────────────────────────────────────────
+! show ip routing
+! show ip interface brief
+! show ip route
+! show vlan brief
+! show ip dhcp snooping
+! show ip dhcp snooping binding
+! show dot1x all
+! show authentication sessions
+! show ntp status
+! ping 192.168.10.1 source vlan 50     ! test SVI VLAN10
+! ping 192.168.50.10 source vlan 10    ! test inter-VLAN routing

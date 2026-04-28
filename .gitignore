@@ -4,7 +4,27 @@
 # Environment variables (secrets)
 .env
 
+# Certificats et clés privées
+*.key
+*.pem
+*.pfx
+*.p12
+*.cer
+*_Thumbprint.txt
+
+# Logs locaux
+*.log
+/var/log/
+
 # OS
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Fichiers confidentiels — local only
+Documentation/06_Credentials_Access_RP01.md
+Documentation/Oral/
+
+# Sauvegardes TFTP (données runtime, non versionnées)
+cisco/configs-cisco/tftp-backup/archives/
+cisco/configs-cisco/TFTP/

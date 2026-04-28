@@ -1,0 +1,30 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      dhcp6: false
+      link-local: []
+      addresses: [192.168.50.1/24]
+  vlans:
+    vlan10:
+      id: 10
+      link: enp0s8
+      addresses: [192.168.10.1/24]
+    vlan20:
+      id: 20
+      link: enp0s8
+      addresses: [192.168.20.1/24]
+    vlan30:
+      id: 30
+      link: enp0s8
+      addresses: [192.168.30.1/24]
+    vlan40:
+      id: 40
+      link: enp0s8
+      addresses: [192.168.40.1/24]
+    vlan99:
+      id: 99
+      link: enp0s8
+      addresses: [192.168.99.1/24]

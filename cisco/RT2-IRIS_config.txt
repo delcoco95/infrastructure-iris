@@ -82,6 +82,9 @@ interface GigabitEthernet0/1.40
  ip address 192.168.40.1 255.255.255.0
  ip nat inside
  ip helper-address 192.168.50.10
+ ! GUEST_FILTER : les invités accèdent uniquement à Internet
+ ! Accès aux VLANs internes bloqué explicitement
+ ip access-group GUEST_FILTER in
  no shutdown
 !
 ! ── VLAN 50 — Management IT (CORRECTION : NAT inside ajouté)
@@ -128,6 +131,28 @@ ip access-list extended BLOCK-WAN-IN
  deny   tcp any any eq 23 log    ! Telnet
  deny   tcp any any eq 3389 log  ! RDP direct depuis WAN
  permit ip any any
+!
+! ── ACL — Filtrage GUEST (VLAN 40) ──────────────────────
+! Les invités peuvent accéder à Internet uniquement
+! Accès interdit aux VLANs internes (sécurité)
+!
+ip access-list extended GUEST_FILTER
+ permit udp any any eq 67          ! DHCP request
+ permit udp any any eq 68          ! DHCP reply
+ permit udp any host 192.168.50.10 eq 53   ! DNS UDP vers DC
+ permit tcp any host 192.168.50.10 eq 53   ! DNS TCP vers DC
+ ! Bloquer accès aux VLANs internes
+ deny ip 192.168.40.0 0.0.0.255 192.168.10.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.20.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.30.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.50.0 0.0.0.255 log
+ deny ip 192.168.40.0 0.0.0.255 192.168.99.0 0.0.0.255 log
+ ! Autoriser Internet (HTTP/HTTPS/DNS public)
+ permit tcp any any eq 80
+ permit tcp any any eq 443
+ permit udp any any eq 53
+ permit icmp any any echo           ! Ping sortant pour diagnostic
+ deny ip any any log                ! Tout le reste bloqué
 !
 ! ── ACL — Filtrage PRE_AUTH (VLAN 99) ────────────────────
 ! Autorise uniquement DNS + DHCP + RADIUS + accès Web limité

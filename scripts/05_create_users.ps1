@@ -35,7 +35,7 @@ try {
     )
 
     foreach ($ou in $ous) {
-        New-ADOrganizationalUnit -Name $ou.Name -Path $ou.Path -ErrorAction SilentlyContinue
+        try { New-ADOrganizationalUnit -Name $ou.Name -Path $ou.Path -ErrorAction Stop } catch {}
     }
     Write-Host "[OK] OUs créées."
 
@@ -51,8 +51,10 @@ try {
     )
 
     foreach ($g in $groups) {
-        New-ADGroup -Name $g -GroupScope Global -GroupCategory Security `
-            -Path "OU=Groupes,$base" -ErrorAction SilentlyContinue
+        try {
+            New-ADGroup -Name $g -GroupScope Global -GroupCategory Security `
+                -Path "OU=Groupes,$base" -ErrorAction Stop
+        } catch {}
     }
     Write-Host "[OK] Groupes créés."
 
@@ -95,37 +97,41 @@ try {
 
     foreach ($u in $users) {
         $sp = ConvertTo-SecureString $u.Pass -AsPlainText -Force
-        New-ADUser `
-            -SamAccountName     $u.Sam `
-            -Name               $u.Name `
-            -AccountPassword    $sp `
-            -Enabled            $true `
-            -Path               $u.OU `
-            -PasswordNeverExpires $false `
-            -ChangePasswordAtLogon $false `
-            -ErrorAction SilentlyContinue
+        try {
+            New-ADUser `
+                -SamAccountName     $u.Sam `
+                -Name               $u.Name `
+                -AccountPassword    $sp `
+                -Enabled            $true `
+                -Path               $u.OU `
+                -PasswordNeverExpires $false `
+                -ChangePasswordAtLogon $false `
+                -ErrorAction Stop
+        } catch {}
 
         if ($u.Group -ne "") {
             Add-ADGroupMember -Identity $u.Group -Members $u.Sam -ErrorAction SilentlyContinue
         }
-        Write-Host "[OK] Utilisateur créé : $($u.Sam)"
+        Write-Host "[OK] Utilisateur créé/existant : $($u.Sam)"
     }
 
     # ── Compte administrateur IT (Domain Admins) ─────────────
     Write-Host "[AD] Création du compte admin IT..."
     $sp = ConvertTo-SecureString "NVTech_Admin2026!" -AsPlainText -Force
-    New-ADUser `
-        -SamAccountName     "nedj.belloum.admin" `
-        -Name               "Nedj Belloum Admin" `
-        -GivenName          "Nedj" `
-        -Surname            "Belloum" `
-        -AccountPassword    $sp `
-        -Enabled            $true `
-        -Path               "OU=Administration,OU=Utilisateurs,$base" `
-        -Description        "Compte administrateur IT - Usage exclusif administration" `
-        -PasswordNeverExpires $false `
-        -ChangePasswordAtLogon $false `
-        -ErrorAction SilentlyContinue
+    try {
+        New-ADUser `
+            -SamAccountName     "nedj.belloum.admin" `
+            -Name               "Nedj Belloum Admin" `
+            -GivenName          "Nedj" `
+            -Surname            "Belloum" `
+            -AccountPassword    $sp `
+            -Enabled            $true `
+            -Path               "OU=Administration,OU=Utilisateurs,$base" `
+            -Description        "Compte administrateur IT - Usage exclusif administration" `
+            -PasswordNeverExpires $false `
+            -ChangePasswordAtLogon $false `
+            -ErrorAction Stop
+    } catch {}
 
     Add-ADGroupMember -Identity "GRP_IT_Admin"  -Members "nedj.belloum.admin" -ErrorAction SilentlyContinue
     Add-ADGroupMember -Identity "Domain Admins" -Members "nedj.belloum.admin" -ErrorAction SilentlyContinue

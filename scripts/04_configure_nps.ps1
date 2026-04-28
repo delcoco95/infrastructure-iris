@@ -26,7 +26,7 @@ try {
     Write-Host "[NPS] Ajout des 3 clients RADIUS (netsh)..."
 
     $radiusClients = @(
-        @{ Name = "AP-IRIS";    Address = "192.168.50.24"; Secret = "RadiusAP_IRIS_2026!"  },
+        @{ Name = "AP-IRIS";    Address = "192.168.50.5";  Secret = "RadiusAP_IRIS_2026!"  },
         @{ Name = "SW2-IRIS";   Address = "192.168.50.2";  Secret = "RadiusSW_IRIS_2026!"  },
         @{ Name = "RT2-IRIS";   Address = "192.168.50.1";  Secret = "RadiusRTR_IRIS_2026!" }
     )

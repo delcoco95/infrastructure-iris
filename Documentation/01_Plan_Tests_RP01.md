@@ -120,6 +120,65 @@ Ce document liste l'ensemble des tests de validation à réaliser lors de la mis
 
 ---
 
+---
+
+## Catégorie 8 — VM Client Windows 11 (PC-CLIENT-IRIS)
+
+> **Prérequis :** VM `dc-iris` et `srv-linux` démarrées. Lancer avec `vagrant up client-win11`  
+> **IP client :** 192.168.50.30 | **Domaine :** mediaschool.local | **DC :** 192.168.50.10
+
+### 8A — Jonction domaine
+
+| # | Test | Action | Résultat attendu | Statut |
+|---|------|--------|------------------|--------|
+| T54 | DNS pointé vers DC | `nslookup mediaschool.local` dans CMD | 192.168.50.10 retourné | ☐ |
+| T55 | Machine jointe au domaine | `whoami /fqdn` ou Propriétés Système | `PC-CLIENT-IRIS.mediaschool.local` | ☐ |
+| T56 | Connexion compte Étudiant | Déconnexion + login `nedj.belloum@mediaschool.local` / `PasswordSISR2_2026!` | Session Windows ouverte | ☐ |
+| T57 | Connexion compte Professeur | Login `yan.bourquard@mediaschool.local` / `Prof_IRIS_2026!` | Session Windows ouverte | ☐ |
+| T58 | Connexion compte Admin IT | Login `marie.agnamazian@mediaschool.local` / `Admin_IRIS_2026!` | Session Windows ouverte | ☐ |
+| T59 | GPO appliquée au poste | `gpresult /R` (compte étudiant) | GPO-SEC-Postes-Etudiants présente dans Applied GPOs | ☐ |
+
+### 8B — Tests services GLPI (http://192.168.50.20:8082)
+
+| # | Test | Compte utilisé | Action | Résultat attendu | Statut |
+|---|------|---------------|--------|------------------|--------|
+| T60 | Accès GLPI depuis client | Admin IT | Ouvrir `http://192.168.50.20:8082` | Page login GLPI affichée (HTTP 200) | ☐ |
+| T61 | Login GLPI compte admin local | Admin IT | Login `glpi` / `glpi` | Tableau de bord GLPI accessible | ☐ |
+| T62 | Création ticket helpdesk | Étudiant | GLPI → Créer ticket → "Mon poste ne démarre pas" | Ticket créé, n° attribué | ☐ |
+| T63 | Gestion ticket (Admin) | Admin IT | GLPI → Tickets → Attribuer + changer statut | Ticket mis à jour, état = En cours | ☐ |
+| T64 | Inventaire PC-CLIENT-IRIS | Admin IT | GLPI → Parc → Ordinateurs | PC-CLIENT-IRIS visible (si agent GLPI installé) | ☐ |
+
+### 8C — Tests services Nextcloud (http://192.168.50.20:8081)
+
+| # | Test | Compte utilisé | Action | Résultat attendu | Statut |
+|---|------|---------------|--------|------------------|--------|
+| T65 | Accès Nextcloud depuis client | Tous | Ouvrir `http://192.168.50.20:8081` | Page login Nextcloud affichée | ☐ |
+| T66 | Login Nextcloud compte admin | Admin IT | Login `admin` / `NextcloudAdmin2026!` | Dashboard Nextcloud accessible | ☐ |
+| T67 | Upload fichier | Étudiant | Nextcloud → + → Upload → fichier test.txt | Fichier uploadé, visible dans Files | ☐ |
+| T68 | Partage fichier | Professeur | Nextcloud → Sélectionner fichier → Share → entrer login étudiant | Fichier partagé, accessible depuis compte étudiant | ☐ |
+| T69 | Download fichier partagé | Étudiant | Nextcloud → Shared with me → télécharger | Fichier téléchargé correctement | ☐ |
+
+### 8D — Tests Grafana / supervision (http://192.168.50.20:3000)
+
+| # | Test | Compte utilisé | Action | Résultat attendu | Statut |
+|---|------|---------------|--------|------------------|--------|
+| T70 | Accès Grafana depuis client | Admin IT | Ouvrir `http://192.168.50.20:3000` | Page login Grafana affichée | ☐ |
+| T71 | Login Grafana | Admin IT | Login `admin` / `Grafana_IRIS_2026!` | Dashboard Grafana accessible | ☐ |
+| T72 | Dashboard CPU/RAM visible | Admin IT | Grafana → Dashboards → IRIS Infrastructure | Métriques CPU, RAM, réseau SRV-LINUX visibles | ☐ |
+| T73 | PC-CLIENT-IRIS visible dans Prometheus | Admin IT | `http://192.168.50.20:9090/targets` | *(optionnel si Node Exporter installé sur client)* | ☐ |
+
+### 8E — Scénarios complets par profil utilisateur
+
+| # | Scénario | Étapes | Résultat attendu | Statut |
+|---|----------|--------|------------------|--------|
+| T74 | **Scénario Étudiant SISR** | 1. Login `nedj.belloum` sur PC-CLIENT-IRIS → 2. Ouvrir GLPI → 3. Créer ticket → 4. Ouvrir Nextcloud → 5. Upload TP | Accès GLPI + Nextcloud OK, ticket créé | ☐ |
+| T75 | **Scénario Professeur** | 1. Login `yan.bourquard` → 2. Ouvrir Nextcloud → 3. Déposer cours PDF → 4. Partager au groupe SISR → 5. GLPI vérification tickets | Partage fonctionnel, GLPI visible | ☐ |
+| T76 | **Scénario Admin IT** | 1. Login `marie.agnamazian` → 2. GLPI → Gérer parc → 3. Grafana → Vérifier métriques → 4. Nextcloud → Vérifier stockage | Contrôle complet de l'infrastructure | ☐ |
+| T77 | **Accès refusé (test sécurité)** | Compte étudiant tente d'accéder Grafana admin panel | Accès refusé ou en lecture seule | ☐ |
+| T78 | **GPO Étudiant — Panneau de contrôle** | Login étudiant → Tentative Control Panel | Accès refusé (GPO-SEC-Postes-Etudiants) | ☐ |
+
+---
+
 ## Récapitulatif
 
 | Catégorie | Nb tests | Validés | En attente | Avertissement |
@@ -131,9 +190,11 @@ Ce document liste l'ensemble des tests de validation à réaliser lors de la mis
 | 5 — Réseau Cisco | 7 | ☐ | 7 (simulation Packet Tracer) | — |
 | 6 — Sécurité GPO | 8 | ☐ | 8 (nécessitent poste joint au domaine) | — |
 | 7 — Intégration | 5 | ☐ | 5 (scénarios end-to-end physiques) | — |
-| **TOTAL** | **53** | **22** | **30** | **1** |
+| **8 — Client Win11** | **25** | ☐ | **25 (à réaliser avec VM client-win11)** | — |
+| **TOTAL** | **78** | **22** | **55** | **1** |
 
-> **Contexte lab :** Les tests T13, T15, T19-T24, T34-T40, T41-T53 nécessitent une infrastructure physique (switch Cisco 802.1X, postes clients joints au domaine) non disponible en environnement Vagrant/VirtualBox. Ils seront validés lors du déploiement en salle réseau MEDIASCHOOL.
+> **Contexte lab :** Les tests T13, T15, T19-T24, T34-T40, T41-T53 nécessitent une infrastructure physique (switch Cisco 802.1X) non disponible en environnement Vagrant/VirtualBox.  
+> **Tests Catégorie 8 (T54–T78)** : réalisables entièrement avec la VM `client-win11` + `dc-iris` + `srv-linux` sous Vagrant. Démarrer avec `vagrant up client-win11` (VM en `autostart: false`).
 
 ---
 

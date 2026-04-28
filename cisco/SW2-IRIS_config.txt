@@ -75,12 +75,12 @@ interface GigabitEthernet0/1
  switchport trunk allowed vlan 10,20,30,40,50,99
  no shutdown
 !
-! ── Uplink vers AP-IRIS (Gi0/2) ───────────────────────────
+! ── PC de gestion / test (Gi0/2) ─────────────────────────
 interface GigabitEthernet0/2
- description UPLINK-vers-AP-IRIS
- switchport mode trunk
- switchport trunk native vlan 99
- switchport trunk allowed vlan 10,20,30,40,99
+ description PC-GESTION-ADMIN
+ switchport mode access
+ switchport access vlan 50
+ spanning-tree portfast
  no shutdown
 !
 ! ── Port DC-IRIS-01 (Fa0/1) ───────────────────────────────
@@ -118,8 +118,35 @@ interface range FastEthernet0/10 - 19
  dot1x timeout tx-period 10
  no shutdown
 !
-! ── Ports accès salles Profs (Fa0/20-24) ─────────────────
-interface range FastEthernet0/20 - 24
+! ── Port AP-EWC-IRIS (Fa0/21) — Trunk WiFi ───────────────
+! Native VLAN 50 = management AP | Tagged : 10/20/30/40
+interface FastEthernet0/21
+ description AP2-IRIS-192.168.50.5
+ switchport mode trunk
+ switchport trunk native vlan 50
+ switchport trunk allowed vlan 10,20,30,40,50
+ spanning-tree portfast trunk
+ no shutdown
+!
+! ── Ports accès salles Profs (Fa0/20, Fa0/22-24) ─────────
+interface FastEthernet0/20
+ description POSTES-PROFS
+ switchport mode access
+ switchport access vlan 99
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ authentication host-mode single-host
+ authentication order dot1x mab
+ authentication priority dot1x mab
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ dot1x pae authenticator
+ dot1x timeout tx-period 10
+ no shutdown
+!
+interface range FastEthernet0/22 - 24
  description POSTES-PROFS
  switchport mode access
  switchport access vlan 99

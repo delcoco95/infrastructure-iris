@@ -1,0 +1,9 @@
+bmb_creations_output_folder: '{project-root}/_byan-output/bmb-creations'
+user_name: Nedj
+communication_language: Francais
+document_output_language: Francais
+output_folder: '{project-root}/_byan-output'
+platform: copilot
+install_mode: auto
+byan_version: 2.15.0
+soul_mode: creator
