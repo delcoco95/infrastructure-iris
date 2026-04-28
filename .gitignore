@@ -25,6 +25,7 @@ desktop.ini
 Documentation/06_Credentials_Access_RP01.md
 Documentation/Oral/
 
-# Sauvegardes TFTP (données runtime, non versionnées)
+# BYAN agent files — not part of project deliverables
+_byan/
 cisco/configs-cisco/tftp-backup/archives/
 cisco/configs-cisco/TFTP/
