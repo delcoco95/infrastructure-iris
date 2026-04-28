@@ -179,6 +179,49 @@ Ce document liste l'ensemble des tests de validation à réaliser lors de la mis
 
 ---
 
+---
+
+## Catégorie 9 — WiFi 802.1X — AP2-IRIS (C9105AXI-E EWC)
+
+> **Équipement :** AP2-IRIS — Cisco C9105AXI-E EWC IOS-XE 17.9.8.5 — IP 192.168.50.5  
+> **Architecture :** Option A — 4 SSIDs dédiés, VLAN statique par policy (aaa-override DÉSACTIVÉ)  
+> **Auth :** PEAP-MSCHAPv2 via NPS → DOT1X-IRIS authentication-list
+
+### 9A — État de la configuration AP
+
+| # | Test | Commande | Résultat attendu | Statut |
+|---|------|----------|------------------|--------|
+| T79 | 4 WLANs actifs | `show wlan summary` | IRIS-WIFI(1), IRIS-PROFS(2), IRIS-ADMIN(3), IRIS-GUEST(4) — Status UP | ✅ |
+| T80 | Policy tag PTAG-IRIS appliqué | `show ap config general AP2-IRIS` | Policy tag = PTAG-IRIS | ✅ |
+| T81 | 4 policies sans aaa-override | `show wireless profile policy detail POLICY-PROFS` | AAA Override : DISABLED | ✅ |
+| T82 | Authentication-list correcte | `show run \| include authentication-list` | DOT1X-IRIS sur les 4 WLANs | ✅ |
+| T83 | RADIUS server contactable | `test aaa group NPS-DC-IRIS-GROUP` | PASS | ✅ |
+
+### 9B — Tests d'authentification 802.1X WiFi
+
+| # | Test | SSID | Compte AD | Groupe | VLAN attendu | Statut |
+|---|------|------|-----------|--------|--------------|--------|
+| T84 | Connexion étudiant IRIS-WIFI | IRIS-WIFI | nedj.belloum | GRP_Etudiants_SISR | VLAN 10 + IP 192.168.10.x | ✅ |
+| T85 | Connexion prof IRIS-PROFS | IRIS-PROFS | yan.bourquard | GRP_Profs | VLAN 20 + IP 192.168.20.x | ✅ |
+| T86 | Connexion admin IRIS-ADMIN | IRIS-ADMIN | marie.agnamazian | GRP_Administration | VLAN 30 + IP 192.168.30.x | ✅ |
+| T87 | Connexion invité IRIS-GUEST | IRIS-GUEST | invite.test | GRP_Invites | VLAN 40 + IP 192.168.40.x | ✅ |
+| T88 | Rejet compte inexistant | IRIS-WIFI | compte_xxx | — | Access-REJECT NPS (evt 6273) | ✅ |
+| T89 | Log NPS événement 6272 | DC-IRIS-01 Event Viewer | Auth réussie | ID 6272 visible, CRP_EAP_8021X | ✅ |
+| T90 | Exclusion list vide après connexion OK | `show wireless exclusionlist` | 0 clients exclus | ✅ |
+
+### 9C — Vérification commandes AP
+
+```
+# Commandes de validation à exécuter sur AP2-IRIS
+show wlan summary
+show wireless profile policy summary
+show wireless client summary
+show wireless exclusionlist
+show running-config | include authentication-list
+```
+
+---
+
 ## Récapitulatif
 
 | Catégorie | Nb tests | Validés | En attente | Avertissement |
@@ -190,11 +233,13 @@ Ce document liste l'ensemble des tests de validation à réaliser lors de la mis
 | 5 — Réseau Cisco | 7 | ☐ | 7 (simulation Packet Tracer) | — |
 | 6 — Sécurité GPO | 8 | ☐ | 8 (nécessitent poste joint au domaine) | — |
 | 7 — Intégration | 5 | ☐ | 5 (scénarios end-to-end physiques) | — |
-| **8 — Client Win11** | **25** | ☐ | **25 (à réaliser avec VM client-win11)** | — |
-| **TOTAL** | **78** | **22** | **55** | **1** |
+| 8 — Client Win11 | 25 | ☐ | 25 (à réaliser avec VM client-win11) | — |
+| **9 — WiFi AP2-IRIS** | **12** | **✅ 12** | **0** | — |
+| **TOTAL** | **90** | **34** | **55** | **1** |
 
 > **Contexte lab :** Les tests T13, T15, T19-T24, T34-T40, T41-T53 nécessitent une infrastructure physique (switch Cisco 802.1X) non disponible en environnement Vagrant/VirtualBox.  
-> **Tests Catégorie 8 (T54–T78)** : réalisables entièrement avec la VM `client-win11` + `dc-iris` + `srv-linux` sous Vagrant. Démarrer avec `vagrant up client-win11` (VM en `autostart: false`).
+> **Tests Catégorie 8 (T54–T78)** : réalisables entièrement avec la VM `client-win11` + `dc-iris` + `srv-linux` sous Vagrant. Démarrer avec `vagrant up client-win11` (VM en `autostart: false`).  
+> **Tests Catégorie 9 (T79–T90)** : validés en environnement physique réel sur AP2-IRIS C9105AXI-E. Architecture Option A (Multi-SSID VLAN statique) — voir doc `16_Multi_SSID_VLAN_Option_A.md`.
 
 ---
 

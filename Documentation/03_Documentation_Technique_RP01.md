@@ -48,7 +48,7 @@ L'établissement MEDIASCHOOL Nice dispose d'une infrastructure réseau obsolète
 | SRV-LINUX-IRIS | Docker (GLPI, Nextcloud, etc.) | 192.168.50.20 | Ubuntu 22.04 LTS |
 | SW2-IRIS | Switch accès + 802.1X | 192.168.50.2 | Cisco Catalyst 2960-S IOS 15.2 |
 | RT2-IRIS | Routeur inter-VLAN + NAT | 192.168.50.1 | Cisco ISR 1941W IOS 15.2 |
-| AP-IRIS | Point d'accès WiFi | 192.168.50.24 | Cisco AIR-CAP2702I |
+| AP-IRIS | Point d'accès WiFi | 192.168.50.5 | Cisco C9105AXI-E EWC IOS-XE 17.9.8.5 |
 
 ---
 
@@ -104,7 +104,7 @@ mediaschool.local
 
 | Nom | IP | Secret partagé |
 |-----|----|---------------|
-| AP-IRIS | 192.168.50.24 | RadiusAP_IRIS_2026! |
+| AP2-IRIS | 192.168.50.5 | RadiusAP_IRIS_2026! |
 | SW2-IRIS | 192.168.50.2 | RadiusSW_IRIS_2026! |
 | RT2-IRIS | 192.168.50.1 | RadiusRTR_IRIS_2026! |
 
@@ -121,7 +121,13 @@ mediaschool.local
 
 ### 4.3 Attributs RADIUS pour l'assignation VLAN
 
-Chaque politique injecte 3 attributs Vendor-Specific :
+> **⚠️ Important — Architecture WiFi Option A :**  
+> Les politiques NPS **ne contiennent pas** d'attributs Tunnel pour le WiFi (AP2-IRIS EWC 17.9).  
+> L'EWC 17.9.x en mode FlexConnect est incompatible avec `aaa-override` + VLAN dynamique.  
+> Sur l'AP2-IRIS, le VLAN est déterminé par la **policy statique** (un SSID = un VLAN fixe).  
+> Les attributs Tunnel ci-dessous s'appliquent **uniquement au switch filaire SW2-IRIS** (802.1X câblé).
+
+Chaque politique injecte 3 attributs Vendor-Specific (filaire uniquement) :
 
 ```
 Tunnel-Type         = 13 (VLAN)
@@ -311,6 +317,48 @@ etsh nps add registeredserver sans arguments |
 - dc-iris → srv-linux (192.168.50.20) : **ping OK** (21ms)
 - srv-linux → dc-iris (192.168.50.10) : **ping OK** (1.19ms, 0% loss)
 - Réseau privé lan_management : **opérationnel**
+
+---
+
+## 10. WiFi — AP2-IRIS (Cisco C9105AXI-E EWC)
+
+### 10.1 Architecture WiFi — Option A
+
+L'accès WiFi est implémenté en **Option A (Multi-SSID, VLAN statique)** en raison d'une limitation du firmware EWC 17.9.x en mode FlexConnect local switching, incompatible avec l'attribution dynamique de VLAN via `aaa-override`. Voir `Documentation/17_Journal_Incidents_Solutions_RP01.md` — Incident #5.
+
+### 10.2 SSIDs déployés
+
+| SSID | WLAN ID | Policy AP | VLAN | Profil |
+|------|---------|-----------|------|--------|
+| IRIS-WIFI | 1 | POLICY-ETUDIANTS | 10 | Étudiants SISR + SLAM |
+| IRIS-PROFS | 2 | POLICY-PROFS | 20 | Professeurs |
+| IRIS-ADMIN | 3 | POLICY-ADMIN | 30 | Administration |
+| IRIS-GUEST | 4 | POLICY-INVITES | 40 | Invités |
+
+### 10.3 Sécurité WiFi
+
+- **Protocole :** WPA2-Enterprise 802.1X + AES
+- **Authentification :** PEAP-MSCHAPv2 via NPS (DC-IRIS-01)
+- **Certificat :** Auto-signé lab (production : PKI AD CS + GPO auto-enrôlement)
+- **AAA list :** `DOT1X-IRIS` (groupe NPS-DC-IRIS-GROUP → RADIUS 192.168.50.10:1812)
+- **aaa-override :** DÉSACTIVÉ sur toutes les policies (incompatible FlexConnect EWC 17.9)
+
+### 10.4 Règle de configuration critique
+
+```
+! TOUJOURS suivre ce pattern pour toute modification WLAN/Policy sur EWC :
+wlan <nom>
+  shutdown          ! 1. Désactiver d'abord
+  <modification>    ! 2. Appliquer le changement
+  no shutdown       ! 3. Réactiver
+write memory        ! 4. Sauvegarder
+```
+
+### 10.5 Référence documentation
+
+- Configuration complète : `cisco/backups/AP2-IRIS_backup_config.txt`
+- Procédure détaillée : `Documentation/16_Multi_SSID_VLAN_Option_A.md`
+- Journal incidents WiFi : `Documentation/17_Journal_Incidents_Solutions_RP01.md` (Incidents #5-8)
 
 ---
 

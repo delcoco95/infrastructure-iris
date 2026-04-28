@@ -168,7 +168,54 @@ show ip nat translations     ! Vérifier règles NAT
 
 ---
 
-## Étape 7 — Test d'authentification 802.1X
+## Étape 6bis — Configuration du point d'accès WiFi AP2-IRIS (EWC)
+
+> **Équipement :** Cisco C9105AXI-E EWC — IP 192.168.50.5  
+> **Architecture :** Option A (Multi-SSID, VLAN statique par policy)  
+> ⚠️ **Note EWC 17.9 :** `aaa-override` est incompatible avec FlexConnect local switching → utiliser uniquement des VLANs statiques par policy.
+
+### Connexion à l'AP
+
+```
+ssh admin@192.168.50.5
+! ou via console
+```
+
+### Vérification de l'état (AP déjà configuré — config sauvegardée)
+
+```
+AP2-IRIS# show wlan summary
+! Attendu : 4 WLANs UP : IRIS-WIFI(1), IRIS-PROFS(2), IRIS-ADMIN(3), IRIS-GUEST(4)
+
+AP2-IRIS# show wireless profile policy summary
+! Attendu : POLICY-ETUDIANTS, POLICY-PROFS, POLICY-ADMIN, POLICY-INVITES
+
+AP2-IRIS# show wireless client summary
+! Clients actuellement connectés
+```
+
+### Si reconfiguration nécessaire (réinitialisation AP)
+
+La configuration complète se trouve dans : `cisco/backups/AP2-IRIS_backup_config.txt`
+
+Points critiques à respecter :
+1. **Toujours désactiver un WLAN avant modification** (`shutdown` → changement → `no shutdown`)
+2. **Désactiver `aaa-override`** sur toutes les policies (`no aaa-override`)
+3. **Utiliser uniquement `DOT1X-IRIS`** comme authentication-list (pas `RADIUS-DOT1X`)
+4. **Sauvegarder** après chaque modification : `write memory`
+
+### Tableau SSIDs → VLANs
+
+| SSID | WLAN ID | Policy | VLAN | Utilisateurs |
+|------|---------|--------|------|--------------|
+| IRIS-WIFI | 1 | POLICY-ETUDIANTS | 10 | Étudiants SISR + SLAM |
+| IRIS-PROFS | 2 | POLICY-PROFS | 20 | Professeurs |
+| IRIS-ADMIN | 3 | POLICY-ADMIN | 30 | Administration |
+| IRIS-GUEST | 4 | POLICY-INVITES | 40 | Invités |
+
+---
+
+## Étape 7 — Test d'authentification 802.1X filaire
 
 Connecter un poste de test sur un port accès du SW2-IRIS (Fa0/10 à Fa0/19) :
 
@@ -176,6 +223,42 @@ Connecter un poste de test sur un port accès du SW2-IRIS (Fa0/10 à Fa0/19) :
 2. Entrer les identifiants d'un étudiant AD (ex : `etudiant01` / `Etudiant01_2026!`)
 3. Vérifier dans l'**Observateur d'événements** de DC-IRIS-01 (NPS logs) que l'authentification a réussi (événement 6272)
 4. Vérifier que le poste a reçu une IP en 192.168.10.x
+
+---
+
+## Étape 8 — Test d'authentification 802.1X WiFi
+
+Connecter un smartphone ou un PC à un des 4 SSIDs WiFi :
+
+### Configuration du profil WiFi (Windows 11)
+
+1. Paramètres → WiFi → Gérer les réseaux connus → Ajouter
+2. **Méthode :** WPA2-Entreprise (802.1X)
+3. **Protocole EAP :** PEAP-MSCHAPv2
+4. **Validation du certificat :** Désactiver en lab / Configurer CA en production
+5. **Identifiants :** compte AD `nomprenom@mediaschool.local`
+
+### Tests par profil
+
+| SSID | Compte test | VLAN attendu | IP attendue |
+|------|------------|--------------|-------------|
+| IRIS-WIFI | nedj.belloum | 10 | 192.168.10.x |
+| IRIS-PROFS | yan.bourquard | 20 | 192.168.20.x |
+| IRIS-ADMIN | marie.agnamazian | 30 | 192.168.30.x |
+| IRIS-GUEST | invite.test | 40 | 192.168.40.x |
+
+### Vérifications côté AP2-IRIS
+```
+show wireless client summary     ! Client visible State = Run
+show wireless exclusionlist      ! Doit être vide (0 clients exclus)
+```
+
+### Vérification côté NPS (DC-IRIS-01)
+```powershell
+Get-WinEvent -LogName "Security" -MaxEvents 10 | Where-Object { $_.Id -in 6272,6273 } | Format-List TimeCreated, Id, Message
+# ID 6272 = accès accordé ✅
+# ID 6273 = accès refusé ❌
+```
 
 ---
 
@@ -206,6 +289,20 @@ show ip nat translations
 show access-lists NAT_LIST
 ```
 Le réseau 192.168.50.0/24 doit être dans la liste (CORRECTION RP01 appliquée).
+
+### Problème WiFi — Client exclu avec "VLAN failure"
+```
+AP2-IRIS# show wireless profile policy detail POLICY-<NOM>
+! Vérifier : AAA Override : DISABLED
+! Si ENABLED → shutdown → no aaa-override → no shutdown
+```
+
+### Problème WiFi — Aucun log NPS lors d'une tentative de connexion
+```
+AP2-IRIS# show run | include authentication-list
+! Vérifier que tous les WLANs ont : DOT1X-IRIS (pas RADIUS-DOT1X)
+! Si incorrect → shutdown WLAN → security dot1x authentication-list DOT1X-IRIS → no shutdown
+```
 
 ---
 

@@ -107,7 +107,26 @@ La séparation frontend/backend garantit que les bases de données ne sont pas a
 
 ---
 
-## A5 — Commandes de vérification rapide
+## A6 — WiFi Option A vs Option B — Questions jury anticipées
+
+**Q : Pourquoi avoir choisi l'Option A (Multi-SSID) plutôt que l'Option B (SSID unique + VLAN dynamique) ?**
+> L'Option B (SSID unique + `aaa-override` + Tunnel-Pvt-Group-ID RADIUS) est la solution théoriquement idéale. Cependant, le Cisco C9105AXI-E fonctionne en mode **EWC FlexConnect local switching** — et cette combinaison est connue comme **incompatible en IOS-XE 17.9.x**. Les tentatives de connexion aboutissaient systématiquement à une exclusion client avec le motif "VLAN failure". L'Option A a été retenue comme contournement éprouvé, compatible avec l'architecture déployée.
+
+**Q : Quelles sont les limites de l'Option A ?**
+> La principale limite est qu'un utilisateur peut théoriquement se connecter à un SSID qui ne correspond pas à son profil (ex: un étudiant sur IRIS-PROFS). NPS authentifie la personne (vérifie que le compte AD existe et est actif) mais n'effectue pas de vérification de groupe sur le SSID. La mitigation est assurée par les ACL inter-VLAN sur RT2-IRIS qui limitent ce que chaque VLAN peut faire.
+
+**Q : Comment aurait-on déployé l'Option B en production ?**
+> Option B nécessite soit un WLC centralisé (Cisco Catalyst Center / ex-DNA Center), soit de passer l'AP en mode **Local** (non FlexConnect). En mode Local, l'AP tunnele tout le trafic vers le WLC central, qui effectue le placement VLAN — ce qui est la configuration standard des déploiements WiFi d'entreprise à grande échelle.
+
+**Q : Pourquoi `aaa-override` était-il activé par défaut sur les nouvelles policies ?**
+> C'est le comportement par défaut d'EWC lors de la création de nouvelles wireless profile policies. Il faut explicitement le désactiver avec `no aaa-override` après `shutdown`. Ce paramètre par défaut est contre-intuitif en mode FlexConnect.
+
+**Q : Quelle est la différence entre `DOT1X-IRIS` et `RADIUS-DOT1X` dans les WLANs ?**
+> `DOT1X-IRIS` est le nom de la vraie méthode AAA configurée sur l'AP (`aaa authentication dot1x DOT1X-IRIS group NPS-DC-IRIS-GROUP`). `RADIUS-DOT1X` était un nom incorrect référencé dans les fichiers de backup mais qui n'existait pas comme méthode AAA valide sur l'AP. Les WLANs qui utilisaient `RADIUS-DOT1X` ne contactaient jamais le serveur RADIUS — aucune erreur n'est levée, les paquets sont juste abandonnés silencieusement.
+
+---
+
+## A7 — Commandes de vérification rapide AP2-IRIS
 
 ```powershell
 # Vérifier AD DS
@@ -135,10 +154,17 @@ docker stats --no-stream
 ```
 
 ```
-! Vérifier Cisco
+! Vérifier Cisco filaire
 show running-config
 show vlan brief
 show ip nat translations
 show dot1x all summary
-```
 
+! Vérifier AP2-IRIS EWC
+show wlan summary
+show wireless profile policy summary
+show wireless client summary
+show wireless exclusionlist
+show running-config | include authentication-list
+show wireless profile policy detail POLICY-PROFS
+```
