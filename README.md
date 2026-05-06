@@ -2,13 +2,13 @@
 
 ---
 
-## 🎯 Contexte
+## Contexte
 
 Dans le cadre du BTS SIO SISR, réponse à un appel d'offre réel de l'école IRIS Nice pour concevoir et déployer une infrastructure réseau sécurisée. L'école ne disposait d'aucune segmentation réseau, d'aucune authentification individuelle et d'aucun environnement de virtualisation dédié à la formation.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Composants
 
@@ -43,7 +43,7 @@ PC → Port 802.1X (SW2-IRIS) → NPS/RADIUS (DC-IRIS-01) → AD DS → Attribut
 
 ---
 
-## 🚀 Déploiement automatisé (Vagrant + PowerShell)
+## Déploiement automatisé (Vagrant + PowerShell)
 
 ### Pré-requis
 
@@ -64,16 +64,16 @@ vagrant up
 
 | # | Script | Rôle | Statut |
 |---|--------|------|--------|
-| 01 | `01_install_roles.ps1` | Installation AD DS, DNS, DHCP, NPAS, RSAT | ✅ |
-| 02 | `02_configure_ad.ps1` | Promotion DC, forêt mediaschool.local, 26 users AD | ✅ |
-| 03 | `03_configure_dhcp.ps1` | 6 scopes DHCP par VLAN, exclusions, options | ✅ |
-| 04 | `04_configure_nps.ps1` | Enregistrement NPS, 3 clients RADIUS, 6 politiques réseau | ✅ |
-| 05 | `05_configure_gpo.ps1` | 4 GPOs, Fine-Grained Password Policies | ✅ |
-| 06 | `linux_docker_services.sh` | Docker Compose — 10 services sur SRV-LINUX-IRIS | ✅ |
+| 01 | `01_install_roles.ps1` | Installation AD DS, DNS, DHCP, NPAS, RSAT | OK |
+| 02 | `02_configure_ad.ps1` | Promotion DC, forêt mediaschool.local, 26 users AD | OK |
+| 03 | `03_configure_dhcp.ps1` | 6 scopes DHCP par VLAN, exclusions, options | OK |
+| 04 | `04_configure_nps.ps1` | Enregistrement NPS, 3 clients RADIUS, 6 politiques réseau | OK |
+| 05 | `05_configure_gpo.ps1` | 4 GPOs, Fine-Grained Password Policies | OK |
+| 06 | `linux_docker_services.sh` | Docker Compose — 10 services sur SRV-LINUX-IRIS | OK |
 
 ---
 
-## 🐳 Services Docker (SRV-LINUX-IRIS)
+## Services Docker (SRV-LINUX-IRIS)
 
 | Service | Port | Rôle |
 |---------|------|------|
@@ -90,21 +90,21 @@ vagrant up
 
 ---
 
-## ✅ Résultats de déploiement (lab Vagrant)
+## Résultats de déploiement (lab Vagrant)
 
 | Test | Résultat |
 |------|----------|
-| Forêt AD `mediaschool.local` | ✅ Opérationnelle |
-| 26 utilisateurs dans 5 groupes AD | ✅ Créés |
-| 6 scopes DHCP actifs | ✅ Fonctionnels |
-| NPS — 3 clients RADIUS + 6 politiques | ✅ Configurés |
-| Docker — 9/10 conteneurs Up | ✅ (ClamAV nécessite ≥ 4 GB RAM) |
-| Connectivité DC ↔ SRV-LINUX | ✅ < 2ms, 0% perte |
-| Services GLPI, Nextcloud, Grafana | ✅ HTTP 200/302 |
+| Forêt AD `mediaschool.local` | Opérationnelle |
+| 26 utilisateurs dans 5 groupes AD | Créés |
+| 6 scopes DHCP actifs | Fonctionnels |
+| NPS — 3 clients RADIUS + 6 politiques | Configurés |
+| Docker — 9/10 conteneurs Up | OK (ClamAV nécessite ≥ 4 GB RAM) |
+| Connectivité DC ↔ SRV-LINUX | OK < 2ms, 0% perte |
+| Services GLPI, Nextcloud, Grafana | HTTP 200/302 |
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 .
@@ -134,7 +134,19 @@ vagrant up
 
 ---
 
-## 👤 Auteur
+## Équipe initiale
+
+| Membre | Rôle | Contribution |
+|--------|------|-------------|
+| **Nedjmeddine Belloum** | Chef de projet | NPS/RADIUS + Active Directory, Vagrant, scripts PowerShell, intégration complète |
+| **Vincent ANDREO** | Configuration réseau | Configuration Cisco (SW2-IRIS, RT2-IRIS, AP2-IRIS) |
+| **Julien MARCUCCI** | Services Linux | Services Docker (docker-compose.yml, stack SRV-LINUX-IRIS) |
+
+> À partir du **16/03/2026**, suite au changement de projet de Julien MARCUCCI et au retard de Vincent ANDREO, le projet a été repris et finalisé **individuellement** par Nedjmeddine Belloum.
+
+---
+
+## Auteur
 
 **Nedjmeddine Belloum** — BTS SIO option SISR — Chef de projet  
 Portfolio : [https://delcoco95.github.io/portfolio-nedj/](https://delcoco95.github.io/portfolio-nedj/)

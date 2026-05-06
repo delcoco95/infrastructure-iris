@@ -24,6 +24,19 @@ desktop.ini
 # Fichiers confidentiels — local only
 Documentation/06_Credentials_Access_RP01.md
 Documentation/Oral/
+Documentation/Appel d'offre - Reponse - RP01/Reponse - Appel d'ofre - RP01.docx
+Documentation/RDP avec un autre pc/
+
+# SQL — contiennent des hachages de mots de passe GLPI
+update_pass.sql
+update_pass_unix.sql
+verify.sql
+
+# Backup DC — configuration infrastructure interne
+DC-backup/
+
+# Présentations et fichiers binaires non versionnés
+Diapo - RP01.pptx
 
 # BYAN agent files — not part of project deliverables
 _byan/

@@ -4,7 +4,8 @@
 
 ---
 
-**Prestataire :** Nedjmeddine Belloum — BTS SIO SISR  
+**Équipe initiale :** Nedjmeddine Belloum (chef de projet — NPS/RADIUS + AD), Vincent ANDREO (Cisco), Julien MARCUCCI (Docker)  
+**Responsable unique à partir du 16/03/2026 :** Nedjmeddine Belloum — BTS SIO SISR  
 **Établissement :** MEDIASCHOOL Nice  
 **Date de remise :** Avril 2026  
 **Responsable technique client :** Yan Bourquard

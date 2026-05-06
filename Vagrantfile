@@ -58,6 +58,13 @@ Vagrant.configure("2") do |config|
     # run: "never"   = manuel via `vagrant provision --provision-with <name>`
     #                  (nécessaire après redémarrages induits par les scripts)
 
+    # Étape préparatoire : prépare DC-IRIS-01 pour accueillir DC-IRIS-02 (PCRA)
+    # run: "never" — à exécuter AVANT de lancer dc-iris-backup
+    dc.vm.provision "dc1_prepare_pcra",
+      type: "shell",
+      path: "DC-backup/scripts/dc1_prepare_pcra.ps1",
+      run: "never"
+
     # Étape 1 : Installation des rôles + redémarrage automatique
     dc.vm.provision "01_install_roles",
       type: "shell",
@@ -95,68 +102,7 @@ Vagrant.configure("2") do |config|
   end
 
   # ────────────────────────────────────────────────────
-  # VM 3 : Windows 11 Enterprise — Poste client test
-  # Rôle  : Jonction domaine mediaschool.local + tests utilisateurs
-  # IP fixe : 192.168.50.30 (VLAN 50 Management lab)
-  # Comptes test : étudiant / professeur / admin
-  # Fix automatique : scripts/00_fix_win11_box.ps1 corrige l'incompatibilité
-  #   OVF ResourceType 32768 (NVMe) avec VirtualBox 7.1.x avant import
-  # ────────────────────────────────────────────────────
-  config.vm.define "client-win11", autostart: false do |client|
-    client.vm.box         = "gusztavvargadr/windows-11-23h2-enterprise"
-    client.vm.box_version = "2509.0.0"
-    client.vm.hostname    = "PC-CLIENT-IRIS"
-
-    client.winrm.username        = "vagrant"
-    client.winrm.password        = "vagrant"
-    client.winrm.transport       = :negotiate
-    client.winrm.basic_auth_only = false
-    client.vm.boot_timeout       = 600
-
-    # RDP accessible depuis l'hôte sur localhost:13389 (partagé avec dc-iris si les deux tournent)
-    client.vm.network "forwarded_port",
-      guest: 3389,
-      host:  13389,
-      id:    "rdp"
-
-    client.vm.provider "virtualbox" do |vb|
-      vb.name   = "PC-CLIENT-IRIS"
-      vb.memory = 4096
-      vb.cpus   = 2
-      vb.gui    = true
-      vb.customize ["modifyvm", :id, "--vram",        "128"]
-      vb.customize ["modifyvm", :id, "--clipboard",   "bidirectional"]
-      vb.customize ["modifyvm", :id, "--draganddrop", "bidirectional"]
-      # NIC2 bridgé sur USB Ethernet — visible depuis SW2-IRIS
-      # IP 192.168.50.30 configurée dans Windows lors du provisioning initial
-      vb.customize ["modifyvm", :id, "--nic2", "bridged",
-                    "--bridgeadapter2", BRIDGED_ADAPTER]
-    end
-
-    # ── Trigger : télécharge et patche le box avant import ──────────────────
-    # Corrige l'erreur VBoxManage "Unknown resource type 32768" (NVMe OVF)
-    # incompatible avec VirtualBox 7.1.x — exécuté une seule fois automatiquement
-    client.trigger.before :up do |t|
-      t.name = "Fix Win11 OVF — VirtualBox 7.1 compatibility"
-      t.run  = {
-        inline: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\00_fix_win11_box.ps1"
-      }
-    end
-
-    # Étape 1 : Préparation + DNS + jonction domaine + redémarrage
-    client.vm.provision "07_join_domain",
-      type: "shell",
-      path: "scripts/07_configure_client.ps1"
-
-    # Étape 2 : Post-jonction — raccourcis, navigateur configuré (run: never = après reboot manuel)
-    client.vm.provision "08_post_join",
-      type: "shell",
-      path: "scripts/08_post_join_client.ps1",
-      run: "never"
-  end
-
-  # ────────────────────────────────────────────────────
-  # VM 2 : Ubuntu 22.04 LTS — Services applicatifs Docker
+  # VM 2 : Ubuntu 22.04 LTS— Services applicatifs Docker
   # Services : GLPI, Nextcloud, WireGuard, Grafana, Prometheus, ClamAV
   # IP fixe : 192.168.50.20 (VLAN 50 Management)
   # ────────────────────────────────────────────────────
