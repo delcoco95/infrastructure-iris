@@ -27,6 +27,16 @@ Documentation/Oral/
 Documentation/Appel d'offre - Reponse - RP01/Reponse - Appel d'ofre - RP01.docx
 Documentation/RDP avec un autre pc/
 
+# Documentation PCRA — local only
+Documentation/09_PCRA_DFSR_RP01.md
+Documentation/10_Comment_Jai_Realise_PCRA.md
+Documentation/11_Presentation_Jury_PCRA.md
+
+# Schémas réseau sources (drawio) — local only
+*.drawio
+*.drawio.bak
+Documentation/schema reseau/RP01 schema.png
+
 # SQL — contiennent des hachages de mots de passe GLPI
 update_pass.sql
 update_pass_unix.sql
