@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ============================================================
 # router_vlan.sh — VM Routeur IRIS (remplace RT2-IRIS)
-# Projet : IRIS-NICE-2024-RP01
+# Projet : IRIS-NICE-2026-RP01
 # Auteur  : Nedjmeddine Belloum
 #
 # Ce script configure la VM comme routeur inter-VLAN via

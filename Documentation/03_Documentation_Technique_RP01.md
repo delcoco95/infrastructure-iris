@@ -47,7 +47,8 @@ L'établissement MEDIASCHOOL Nice dispose d'une infrastructure réseau obsolète
 | DC-IRIS-01 | AD DS + DNS + DHCP + NPS | 192.168.50.10 | Windows Server 2022 Std |
 | SRV-LINUX-IRIS | Docker (GLPI, Nextcloud, etc.) | 192.168.50.20 | Ubuntu 22.04 LTS |
 | SW2-IRIS | Switch accès + 802.1X | 192.168.50.2 | Cisco Catalyst 2960-S IOS 15.2 |
-| RT2-IRIS | Routeur inter-VLAN + NAT | 192.168.50.1 | Cisco ISR 1941W IOS 15.2 |
+| RT2-IRIS | Routeur inter-VLAN + NAT *(physique — principal)* | 192.168.50.1 | Cisco ISR 1941W IOS 15.2 |
+| vm-routeur | Routeur inter-VLAN + NAT *(Ubuntu Vagrant — secours lab)* | 192.168.50.1 | Ubuntu 22.04 + veth VLAN |
 | AP-IRIS | Point d'accès WiFi | 192.168.50.5 | Cisco C9105AXI-E EWC IOS-XE 17.9.8.5 |
 
 ---

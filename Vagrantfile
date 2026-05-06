@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 # Vagrantfile — IRIS Nice RP01 — Infrastructure Windows Server 2022 + Ubuntu Docker
-# Référence : IRIS-NICE-2024-RP01 — BTS SIO SISR — Épreuve E5
+# Référence : IRIS-NICE-2026-RP01 — BTS SIO SISR — Épreuve E5/E6
 # Auteur : Nedjmeddine Belloum
 #
 # ARCHITECTURE RÉSEAU :

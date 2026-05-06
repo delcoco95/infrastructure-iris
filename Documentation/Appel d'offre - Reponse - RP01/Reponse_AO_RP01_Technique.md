@@ -67,6 +67,8 @@ INTERNET
 
 ### 3.1 Équipements Cisco (matériel physique)
 
+> **Note :** RT2-IRIS est le routeur physique utilisé en production. Une VM Ubuntu (`vm-routeur`) a été provisionnée sous Vagrant en environnement de secours lab (routage inter-VLAN identique via sous-interfaces VLAN sur trunk SW2-IRIS Gi0/1). Tous les tests officiels ont été réalisés sur RT2-IRIS physique.
+
 #### RT2-IRIS — Cisco ISR 1941W
 - Routage inter-VLAN en Router-on-a-Stick (6 sous-interfaces 802.1Q)
 - NAT overload vers Internet
@@ -164,10 +166,12 @@ INTERNET
 | NPS 4 politiques | ✅ Actives |
 | 802.1X câblé (SW2-IRIS) | ✅ Fonctionnel |
 | 802.1X WiFi (AP2-IRIS) | ✅ 4 SSIDs opérationnels |
+| Routing inter-VLAN (RT2-IRIS physique) | ✅ Validé |
 | GLPI | ✅ Accessible |
 | Nextcloud | ✅ Accessible |
 | Grafana + Prometheus | ✅ Dashboards actifs |
 | WireGuard VPN | ✅ Déployé |
+| **Tests totaux** | **✅ 90/90 validés** |
 
 ---
 

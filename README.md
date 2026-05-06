@@ -17,7 +17,8 @@ Dans le cadre du BTS SIO SISR, réponse à un appel d'offre réel de l'école IR
 | **DC-IRIS-01** | Windows Server 2022 — AD DS + DNS + DHCP + NPS/RADIUS | 192.168.50.10 |
 | **SRV-LINUX-IRIS** | Ubuntu 22.04 + Docker (10 services) | 192.168.50.20 |
 | **SW2-IRIS** | Cisco Catalyst 2960-S — 802.1X sur chaque port | 192.168.50.2 |
-| **RT2-IRIS** | Cisco ISR 1941W — inter-VLAN routing + NAT | 192.168.50.1 |
+| **RT2-IRIS** | Cisco ISR 1941W — inter-VLAN routing + NAT *(physique — routeur principal)* | 192.168.50.1 |
+| **vm-routeur** | Ubuntu 22.04 Vagrant — fallback inter-VLAN routing *(secours lab, même IP)* | 192.168.50.1 |
 
 ### Segmentation réseau — 6 VLANs
 
